@@ -1,0 +1,273 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+<script type="text/javascript" src="/static/js/SelectBox.js"></script>
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  onLoad
+//---------------------------------------
+$(function(){
+
+	// get session list 
+	inquirySession();
+
+	// Add Event
+	SelectBox.init('selChooseSsn');
+
+    // Set up the JavaScript event handlers for the select box filter interface
+	$('#btnChooseAll').click(function(){
+		SelectBox.move_all('selSession', 'selChooseSsn');
+    	refresh_icons(); 
+	});
+	$('#btnChoose').click(function(){
+		SelectBox.move('selSession', 'selChooseSsn');
+    	refresh_icons(); 
+	});
+	$('#btnRemove').click(function(){
+		SelectBox.move('selChooseSsn', 'selSession');
+    	refresh_icons(); 
+	});	
+	$('#btnRemoveAll').click(function(){
+		SelectBox.move_all('selChooseSsn', 'selSession');
+    	refresh_icons(); 
+	});
+	$('#selSession').change(function(){
+    	refresh_icons(); 
+	});
+	$('#selChooseSsn').change(function(){
+    	refresh_icons(); 
+	});
+	$('#selSession').dblclick(function(){
+		SelectBox.move('selSession', 'selChooseSsn');
+    	refresh_icons(); 
+	});
+	$('#selChooseSsn').dblclick(function(){
+		SelectBox.move('selChooseSsn', 'selSession');
+    	refresh_icons(); 
+	});	
+});
+
+
+
+//---------------------------------------
+//  button handling
+//---------------------------------------
+function refresh_icons() {
+
+	var from = $('#selSession');
+	var to   = $('#selChooseSsn');
+	var is_from_selected = from.find('option:selected').length > 0;
+	var is_to_selected = to.find('option:selected').length > 0;
+	
+	// Active if at least one item is selected
+	$('#btnChoose').toggleClass('active', is_from_selected);
+	$('#btnRemove').toggleClass('active', is_to_selected);
+	// Active if the corresponding box isn't empty
+	$('#btnChooseAll').toggleClass('active', from.find('option').length > 0);
+	$('#btnRemoveAll').toggleClass('active', to.find('option').length > 0);
+}
+
+
+
+
+
+//---------------------------------------
+//  back to subject
+//---------------------------------------
+function backToSubject() {
+	document.mainForm.action = "{% url 'pjo:sessionList' %}";
+	document.mainForm.submit();
+}
+
+
+
+//---------------------------------------
+//  inquiry session list
+//---------------------------------------
+function inquirySession() {
+
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:changeSubject' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+            'txtProjectId' : $('#txtProjectId').val(),
+            'selSubjectNum' : $('#selSubjectNum').val()
+	    }),
+	    success: function(data) {
+	    	var size = data.length;
+	    	var optionText = "";
+	        for(i=0; i<size; i++) {
+	        	optionText = optionText + "<option value='" + i + "'>" + data[i]+ "</option>";
+	        }
+	        $('#selSession').html(optionText);
+	        
+	        // Add Event
+	        SelectBox.init('selSession');
+	    },
+	    failure: function(data) { 
+	        alert('[Session Copy] Failure.');
+	    }
+	});
+}
+
+
+
+//---------------------------------------
+//  Save chosen sessions
+//---------------------------------------
+function saveSession() {
+	
+	// select box
+	var selText = "";
+	$("#selChooseSsn option").each(function(i) {
+		if(selText == "") {
+			selText = $(this).text();
+		} else {
+			selText = selText + "||" + $(this).text();
+		}
+	});
+	
+	if (selText == "") {
+		$("#hidSessionText").val("");
+		alert("Choose session.");
+	} else {
+		$("#hidSessionText").val(selText);
+		
+		document.mainForm.action = "{% url 'pjo:sessionCopySave' %}";
+		document.mainForm.submit();
+	}
+}
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+<div class="module filtered" id="searchlist">
+
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+
+	<!-- hidden -->
+	<input type="hidden" id="hidSessionText" name="hidSessionText">
+	
+	
+	<div id="toolbar">
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtProjectId">Project Name / ID : </label>
+					<input type="text" id="txtProjectName" name="txtProjectName" value="{{ txtProjectName }}" readonly/>
+					<input type="text" id="txtProjectId" name="txtProjectId" value="{{ txtProjectId }}" readonly/>
+				</li>
+				<li>
+					<label for="txtSubjectId">Subject Name / ID (Chosen): </label>
+					<input type="text" id="txtSubjectName" name="txtSubjectName" value="{{ txtSubjectName }}" readonly/>
+					<input type="text" id="txtSubjectNum" name="txtSubjectNum" value="{{ txtSubjectNum }}" readonly/>
+					<input type="hidden" id="txtSubjectId" name="txtSubjectId" value="{{ txtSubjectId }}" readonly/>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<!-- session copy -->
+	<fieldset class="module aligned ">
+		<div class="form-row field-sessions">
+			<div>
+				<label for="id_sessions">Sessions:</label>
+
+				<div class="related-widget-wrapper">
+					<div class="selector">
+
+						<!-- reference session list -->
+						<div class="selector-available">
+							<h2>Available sessions</h2>
+
+							<p id="pSubjectId" class="selector-filter">
+								<span class="spanSubTitle">Reference Subject</span>
+								<select class="selectfilter" id="selSubjectNum" onchange="inquirySession()" 
+										style="width: 230px; height: 30px; margin: 0;">
+								{%	for row in subjectList %}
+									<option value="{{ row.subject_num }}">{{ row.subject_nm }}</option>
+								{% endfor %}
+								</select>
+							</p>
+							
+							<select multiple="multiple" class="filtered" id="selSession" name="selSession[]">
+							</select>
+							
+							<a href="javascript:void(0);" title="Click to choose all sessions at once." id="btnChooseAll" class="selector-chooseall active">Choose all</a>
+						</div>
+
+						<!-- button -->
+						<ul class="selector-chooser">
+							<li>
+								<a title="Choose" href="javascript:void(0);" id="btnChoose" class="selector-add active">Choose</a>
+							</li>
+							<li>
+								<a title="Remove" href="javascript:void(0);" id="btnRemove" class="selector-remove">Remove</a>
+							</li>
+						</ul>
+
+						<!-- Chosen session list -->
+						<div class="selector-chosen">
+						
+							<h2>Chosen sessions</h2>
+
+							<select id="selChooseSsn" multiple="multiple" name="selChooseSsn[]" class="filtered" style="height: 270.8px;">
+							</select>
+
+							<a title="Click to remove all chosen sessions at once." href="javascript:void(0);" id="btnRemoveAll" class="selector-clearall active">Remove all</a>
+						</div>
+						
+						
+					</div>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<!-- end of reference session list -->
+
+	<!-- bottom buttons -->
+	<div class="submit-row">
+		<input type="button" value="Save" class="default" name="btnSave" onclick="saveSession()">
+		<input type="button" value="Back" class="default" id="btnSearch" onclick="backToSubject()"/>
+	</div>
+
+	</form>
+
+</div>
+</div>
+
+{% endblock %}
+
+
+

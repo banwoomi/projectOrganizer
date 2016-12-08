@@ -1,0 +1,256 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  onLoad
+//---------------------------------------
+$(function(){
+
+	// categorizing
+	var strScrType = $("#scrType").val();
+	
+	// register
+	if(strScrType == "REGISTER") {
+    	// button control
+		$("#btnRegister").show();
+		$("#btnModify").hide();
+		$("#divSerial").hide();
+		$("#divUseYn").hide();
+		
+		// field control
+		$("#txtYear").attr("disabled", false);
+		$("#selAnimalType").attr("disabled", false);
+		$("#selMethodType").attr("disabled", false);
+		$("input[name='rdoUseYn']").attr("disabled", true);
+	}
+	// modify
+	else if(strScrType == "MODIFY") {
+    	// button control
+		$("#btnRegister").hide();
+		$("#btnModify").show();
+		
+		// field control
+		$("#txtYear").attr("disabled", true);
+		$("#selAnimalType").attr("disabled", true);
+		$("#selMethodType").attr("disabled", true);
+		$("#txtSerialNo").attr("disabled", true);
+		$("input[name='rdoUseYn']").attr("disabled", true);
+	}
+});
+
+
+
+//---------------------------------------
+//  Validation Check before INSERT / Update
+//---------------------------------------
+function validationCheck() {
+	
+	// item check
+	var strYear = $("#txtYear").val();
+	if(strYear == "") {
+		alert("Fill the Year");
+		$("#txtYear").focus();
+		return false;
+	}
+	
+	var strAnimalType = $("#selAnimalType").val();
+	if(strAnimalType == "") {
+		alert("Choose the Animal Species");
+		$("#selAnimalType").focus();
+		return false;
+	}
+	
+	var strMethodType = $("#selMethodType").val();
+	if(strMethodType == "") {
+		alert("Choose the Method types");
+		$("#selMethodType").focus();
+		return false;
+	}
+	
+	var strProjectAim = $("#txtProjectAim").val();
+	if(strProjectAim == "") {
+		alert("Fill the Project Aim");
+		$("#txtProjectAim").focus();
+		return false;
+	}
+	
+	
+	// categorizing
+	var strScrType = $("#scrType").val();
+	
+	// register
+	if(strScrType == "REGISTER") {
+	}
+	// modify
+	else if(strScrType == "MODIFY") {
+		var sessionName = $("#sessionInitialName").val();
+		var initialName = $("#txtInitial").val();
+		
+		if(sessionName != initialName) {
+			alert("Only the person who registered can change project information.");
+			return false;
+		}
+	}
+	else {
+		return false;
+	}
+	
+	return true;
+}
+
+
+
+//---------------------------------------
+//  register
+//---------------------------------------
+function register() {
+	
+	var strScrType = $("#scrType").val();
+	if(strScrType != "REGISTER") {
+		alert("Register failed");
+	} else {
+		if(validationCheck()) {
+			document.mainForm.action = "{% url 'pjo:projectRegister' %}";
+			document.mainForm.submit();
+		}
+	}
+}
+
+
+//---------------------------------------
+//  modify
+//---------------------------------------
+function modify() {
+
+	var strScrType = $("#scrType").val();
+	if(strScrType != "MODIFY") {
+		alert("Modify failed");
+	} else {
+		if(validationCheck()) {
+			document.mainForm.action = "{% url 'pjo:projectModify' %}";
+			document.mainForm.submit();
+		}
+	}
+}
+
+
+
+//---------------------------------------
+//  go to List
+//---------------------------------------
+function gotoList() {
+	$("#txtProjectAim").attr("disabled", true);
+	document.mainForm.action = "{% url 'pjo:projectList' %}";
+	document.mainForm.submit();
+}
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+
+	<!-- hidden -->
+	<input type="hidden" id="scrType" name="scrType" value="{{ scrType }}"/>
+	<input type="hidden" id="projectId" name="projectId" value="{{ projectId }}"/>
+	<input type="hidden" id="sessionInitialName" name="sessionInitialName" value="{{ sessionInitialName }}"/>
+		
+
+	<div>
+		<fieldset class="module aligned ">
+			
+		<h2>{{ subTitle }}</h2>
+
+		<div class="form-row field-txtInitial">
+			<div>
+				<label for="txtInitial">Researcher Initial:</label>
+				<input class="vIntegerField" id="txtInitial" maxlength="2" name="txtInitial" type="text" value="{{ initialName }}" readonly/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtYear">
+			<div>
+				<label for="txtYear">Year:</label>
+				<input class="vIntegerField" id="txtYear" maxlength="4" name="txtYear" type="text" value="{{ year }}" onblur="javascript:f_numOnly('txtYear')"/>
+			</div>
+		</div>
+
+		<div class="form-row field-selAnimalType">
+			<div>
+				<label for="selAnimalType">Animal Species:</label>
+				<select class="selectfilter" id="selAnimalType" name="selAnimalType">
+					<option value="">--Choose--</option>
+				{%	for anitype in code002 %}
+					<option value="{{ anitype.code_id }}" {% if animalType == anitype.code_id %}selected{% endif %}>{{ anitype.code_nm }}</option>
+				{%	endfor %}
+				</select>
+			</div>
+		</div>
+
+		<div class="form-row field-selMethodType">
+			<div>
+				<label for="selMethodType">Method Types:</label>
+				<select class="selectfilter" id="selMethodType" name="selMethodType">
+					<option value="">--Choose--</option>
+				{%	for methtype in code003 %}
+					<option value="{{ methtype.code_id }}" {% if methodType == methtype.code_id %}selected{% endif %}>{{ methtype.code_nm }}</option>
+				{%	endfor %}
+				</select>
+			</div>
+		</div>
+
+		<div class="form-row field-txtSerialNo" id="divSerial">
+			<div>
+				<label for="txtSerialNo">Serial No:</label>
+				<input class="vIntegerField" id="txtSerialNo" maxlength="3" name="txtSerialNo" type="text" value="{{ serialNo }}" readonly/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtProjectAim">
+			<div>
+				<label for="txtProjectName">Project Aim:</label>
+				<input class="vTextField" id="txtProjectAim" maxlength="200" name="txtProjectAim" type="text" value="{{ projectAim }}"/>
+			</div>
+		</div>
+
+		<div class="form-row field-rdoUseYn" id="divUseYn">
+			<div>
+				<label for="rdoUseYn">Use:</label>
+				<input class="vCheckboxField" id="rdoUseY" name="rdoUseYn" type="radio" value="Y" {% if useYn == 'Y' %}checked{% endif %}/> USE &nbsp;&nbsp;
+				<input class="vCheckboxField" id="rdoUseN" name="rdoUseYn" type="radio" value="N" {% if useYn == 'N' %}checked{% endif %}/> NOT USE
+			</div>
+		</div>
+
+		</fieldset>
+	</div>
+
+	<div class="submit-row">
+		<input type="button" value="REGISTER" class="default" id="btnRegister" onclick="register()"/>
+		<input type="button" value="MODIFY" class="default" id="btnModify" onclick="modify()"/>
+		<input type="button" value="LIST" class="default" id="btnList" onclick="gotoList()"/>
+	</div>
+
+	</form>
+</div>
+
+{% endblock %}
+
+
+

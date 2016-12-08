@@ -1,0 +1,277 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  Check duplication of ID
+//---------------------------------------
+function checkId() {
+
+	var strId = $("#txtId").val();
+
+	if(strId) {
+		$.ajax({
+			type: 'POST',
+			url: "{% url 'pjo:joinCheck' %}",
+			data: { "csrfmiddlewaretoken": "{{ csrf_token }}",
+					flag: 'ID',
+					userId: strId
+			},
+			dataType: 'json',
+			success: function(result) {
+				
+				if(result == 0) {
+					$("#chkId").val("Y");
+					return true;
+				} else {
+					alert("Duplication of ID.");
+					$("#chkId").val("N");
+					$("#txtId").val("");
+					$("#txtId").focus();
+					return false;
+				}
+			}
+			, error: function(errorThrown) {
+				alert("[error:" + errorThrown.status + "] " + errorThrown.responseText);
+				return false;
+			}
+		});
+	} else {
+		return false;
+	}
+}
+
+
+//---------------------------------------
+//  Fill Initial : Char(2)
+//---------------------------------------
+function fillInitial() {
+	
+	var first = $("#txtFirstName").val();
+	var last  = $("#txtLastName").val();
+	
+	if(first != "" && last != "") {
+		
+		var charFirst = first.substr(0,1);
+		var charLast  = last.substr(0,1);
+
+		var init = charFirst + charLast;
+		init = init.toUpperCase();
+		
+		$("#txtInitial").val(init);
+		
+		// check duplication of initial
+		checkInitial();
+	}
+}
+
+
+
+
+//---------------------------------------
+//  Check duplication of initial
+//---------------------------------------
+function checkInitial() {
+
+	var strInitial = $("#txtInitial").val();
+	if(strInitial != '') {
+		$.ajax({
+			type: 'POST',
+			url: '/pjo/join/check',
+			data: { "csrfmiddlewaretoken": "{{ csrf_token }}",
+					flag: 'Initial',
+					initial: strInitial
+			},
+			dataType: 'json',
+			success: function(result) {
+				
+				if(result == 0) {
+					$("#chkInitial").val("Y");
+					return true;
+				} else {
+					alert("Duplication of Initial.");
+					$("#chkInitial").val("N");
+					$("#txtInitial").attr("readonly", false);
+					$("#txtInitial").val("");
+					$("#txtInitial").focus();
+					return false;
+				}
+			}
+			, error: function(errorThrown) {
+				alert("[error:" + errorThrown.status + "] " + errorThrown.responseText);
+				return false;
+			}
+		});
+	} else {
+		return false;
+	}
+}
+
+
+
+
+//---------------------------------------
+//  Validation Check before Saving
+//---------------------------------------
+function validationCheck() {
+	
+	// item check
+	var strId = $("#txtId").val();
+	if(strId == "") {
+		alert("Fill the ID");
+		$("#txtId").focus();
+		return false;
+	}
+	
+	var strFirstName = $("#txtFirstName").val();
+	if(strFirstName == "") {
+		alert("Fill the First Name");
+		$("#txtFirstName").focus();
+		return false;
+	}
+	
+	var strLastName = $("#txtLastName").val();
+	if(strLastName == "") {
+		alert("Fill the Last Name");
+		$("#txtLastName").focus();
+		return false;
+	}
+	
+	var strInitial = $("#txtInitial").val();
+	if(strInitial == "") {
+		alert("Fill the Initial");
+		$("#txtInitial").focus();
+		return false;
+	} else {
+		strInitial = strInitial.toUpperCase();
+		$("#txtInitial").val(strInitial);
+	}
+
+	var strPassword = $("#txtPassword").val();
+	if(strPassword == "") {
+		alert("Fill the Password");
+		$("#txtPassword").focus();
+		return false;
+	}
+	
+	var strRePassword = $("#txtRePassword").val();
+	
+	if(strPassword != strRePassword) {
+		alert("Check your password.");
+		$("#txtRePassword").focus();
+		return false;
+	} 
+	
+	// duplication check
+	var strChkId = $("#chkId").val();
+	if(strChkId == "N") {
+		alert("Duplication of ID")
+		$("#txtId").focus();
+		return false;
+	}
+
+	var strChkInitial = $("#chkInitial").val();
+	if(strChkInitial == "N") {
+		alert("Duplication of Initial")
+		$("#txtInitial").focus();
+		return false;
+	}
+	
+	return true;
+}
+
+
+
+//---------------------------------------
+//  Join
+//---------------------------------------
+function join() {
+	if(validationCheck()) {
+		document.join_form.action = "{% url 'pjo:join' %}";
+		document.join_form.submit();
+	}
+}
+
+
+
+</script>
+
+
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+	<form action="" method="post" id="join_form" name="join_form" novalidate>{% csrf_token %}
+	
+	<!-- hidden -->
+	<input type="hidden" id="chkId" name="chkId" value="N">
+	<input type="hidden" id="chkInitial" name="chkInitial" value="N">
+	
+	<div>
+		<fieldset class="module aligned ">
+			
+		<h2>Personal info</h2>
+
+		<div class="form-row field-txtId">
+			<div>
+				<label for="txtId">ID:</label>
+				<input class="vTextField" id="txtId" maxlength="20" name="txtId" type="text" onblur="javascript:checkId()"/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtFirstName">
+			<div>
+				<label for="txtFirstName">First name:</label>
+				<input class="vTextField" id="txtFirstName" maxlength="50" name="txtFirstName" type="text" onblur="javascript:fillInitial()"/>
+			</div>
+		</div>
+		
+		<div class="form-row field-txtLastName">
+			<div>
+				<label for="txtLastName">Last name:</label>
+				<input class="vTextField" id="txtLastName" maxlength="50" name="txtLastName" type="text"  onblur="javascript:fillInitial()"/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtInit">
+			<div>
+				<label for="txtInitial">Initial:</label>
+				<input class="vTextField" id="txtInitial" maxlength="2" name="txtInitial" type="text" onblur="javascript:checkInitial()" readonly />
+			</div>
+		</div>
+
+		<div class="form-row field-txtPassword">
+			<div>
+				<label for="txtPassword">Password:</label>
+				<input class="vTextField" id="txtPassword" maxlength="20" name="txtPassword" type="password" onfocus="javascript:f_clear(this)"/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtRePassword">
+			<div>
+				<label for="txtRePassword">Check Password:</label>
+				<input class="vTextField" id="txtRePassword" maxlength="20" name="txtRePassword" type="password" onfocus="javascript:f_clear(this)"/>
+			</div>
+		</div>
+		</fieldset>
+	</div>
+
+	<div class="submit-row">
+		<input type="button" value="JOIN" class="default" name="btnJoin" onclick="join()"/>
+	</div>
+
+	</form>
+</div>
+
+{% endblock %}
+

@@ -1,0 +1,1072 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  Go Back To Session
+//---------------------------------------
+function backToSession() {
+	document.mainForm.action = "{% url 'pjo:sessionList' %}";
+	document.mainForm.submit();
+}
+
+
+//---------------------------------------
+//  Load Meta Init
+//---------------------------------------
+function metaInit(scanId) {
+	
+	// select item value
+	var dataType = "";
+	var suffix = "";
+
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:metaInit' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+	    	'txtScanId' : scanId
+	    }),
+	    success: function(data) {
+	    	var optionText = "";
+	    	$.each(data, function(i, element) {
+	    		if(i == 0) {
+		    		$("#txtScanId").val(scanId);
+		    		$("#txtScanNum").val(element.fields.scan_num);
+		    		$("#txtProtoNm").val(element.fields.sch_proto_nm);
+		    		$("#txtEchoTime").val(element.fields.sch_echo_time);
+		    		$("#txtRepetTime").val(element.fields.sch_repet_time);
+		    		$("#txtSchMatrix").val(element.fields.sch_matrix);
+		    		$("#txtSchSlices").val(element.fields.sch_slices);
+		    		$("#txtSchNRepet").val(element.fields.sch_n_repet);
+		    		$("#txtSchSpat").val(element.fields.sch_spat);
+		    		$("#txtTask").val(element.fields.meta_task);
+		    		$("#txtAcq").val(element.fields.meta_acq);
+		    		$("#txtRec").val(element.fields.meta_rec);
+		    		$("#txtRun").val(element.fields.meta_run);
+
+		    		pid = element.fields.pid;
+		    		dataType = element.fields.meta_data_type;
+		    		suffix = element.fields.meta_suffix;
+		    		
+		    		// Set PID
+		    		if(element.fields.pid_arr != null && element.fields.pid_arr != "") {
+		    			
+		    			var pidOptionText = "";
+		    			arrPid = element.fields.pid_arr.split(":");
+		    			var size = arrPid.length;
+		    			for(j=0; j<size; j++) {
+		    				if(j == 0) {
+		    					pidOptionText = "<option value=''>--Choose--</option>";
+		    				} else {
+		    					pidOptionText = pidOptionText + "<option value='" + arrPid[j] + "'>" + arrPid[j] + "</option>";
+		    				}
+		    			}
+		    			
+		    		} else {
+    					pidOptionText = "<option value=''>--Choose--</option>";
+		    		}
+	    			$("#selPid").html(pidOptionText);
+	    			$("#selPid").val(pid);
+		    		
+	    		} else {
+		        	optionText = optionText + "<option value='" + element.fields.code_id + "'>" + element.fields.code_nm + "</option>";
+	    		}
+	        });
+	    	
+	        $('#selDataType').html(optionText);
+	        $('#selDataType').val(dataType);
+
+	        // Choose Meta Data Item, Get Suffix List
+	        inqCodeList(suffix);
+	        
+	    	// arrange unnecessary items
+	    	arrangeItems();
+	    },
+	    failure: function(data) { 
+	        alert('[Meta Init DataType] Failure.');
+	    }
+	});
+	
+	// get Key List for ED table header
+	getEdKeyList();
+}
+	
+
+
+//---------------------------------------
+//  DataType Changed
+//---------------------------------------
+function onChangeDataType() {
+	arrangeItems();
+	clearValue();
+	inqCodeList("");
+}
+
+
+
+//---------------------------------------
+//  Arrange items
+//---------------------------------------
+function arrangeItems() {
+
+	var dataType = $("#selDataType").val();
+	var showEdBtnYn = "N";
+	
+	// functional MRI
+	if(dataType == "F") {
+		$("#ulTask").show();
+		$("#ulAcq").show();
+		$("#ulRec").show();
+		showEdBtnYn = "Y";
+	}
+	// fMRI - infusion
+	else if(dataType == "I") {
+		$("#ulTask").hide();
+		$("#ulAcq").show();
+		$("#ulRec").show();
+		showEdBtnYn = "N";
+	}
+	// DWI
+	else if(dataType == "D") {
+		$("#ulTask").hide();
+		$("#ulAcq").show();
+		$("#ulRec").hide();
+		showEdBtnYn = "Y";
+	}
+	// field Map
+	else if(dataType == "M") {
+		$("#ulTask").hide();
+		$("#ulAcq").show();
+		$("#ulRec").hide();
+		showEdBtnYn = "N";
+	}
+	// Structural Imaging
+	else if(dataType == "A") {
+		$("#ulTask").hide();
+		$("#ulAcq").show();
+		$("#ulRec").show();
+		showEdBtnYn = "N";
+	}
+	
+	// Run 
+	var run = $("#txtRun").val();
+	if(run == "") {
+		$("#ulRun").hide();
+	} else {
+		$("#ulRun").show();
+	}
+	
+	// ED Button
+	if(showEdBtnYn == "Y") {
+		// show/hide
+		$("#btnEdShow").show();
+		$("#btnEdHide").hide();
+		
+	} else {
+		// show/hide
+		$("#btnEdShow").hide();
+		$("#btnEdHide").hide();
+	}
+	
+	// ED Area
+	var strAcq = $("#txtAcq").val();
+	if (strAcq.startsWith("ED")) {
+		controlEDArea("Y");
+	} else {
+		controlEDArea("N");
+	}	
+}
+
+
+
+
+//---------------------------------------
+//  clear value
+//---------------------------------------
+function clearValue() {
+
+	// clear Value
+	$("#txtTask").val("");
+	$("#txtAcq").val("");
+	$("#txtRec").val("");
+	$("#txtRun").val("");
+	$("#txtAcq").prop('disabled', false);
+}
+
+
+
+//---------------------------------------
+//  Inquiry Suffix Code
+//---------------------------------------
+function inqCodeList(suffix) {
+
+	var dataType = $("#selDataType").val();
+	
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:metaCode' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+          'txtDataType' : dataType
+	    }),
+	    success: function(data) {
+	    	var optionText = "";
+	        $.each(data, function(i, element) {
+	        	optionText = optionText + "<option value='" + element.fields.code_id + "'>" + element.fields.code_nm + "</option>";
+	        });
+	        $('#selSuffix').html(optionText);
+	        $('#selSuffix').val(suffix);
+	    },
+	    failure: function(data) { 
+	        alert('[Meta Code List] Failure.');
+	    }
+	});	
+}
+
+//---------------------------------------
+//  Meta Info Save
+//---------------------------------------
+function metaSave() {
+
+	if (validateCheck()) {
+		
+		// ajax header settup for CSRF
+		var csrftoken = f_getCookie('csrftoken');
+		
+		$.ajaxSetup({
+		    beforeSend: function(xhr, settings) {
+		        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+		            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+		        }
+		    }
+		});	
+		
+		// Transaction
+		$.ajax({
+		    url: "{% url 'pjo:metaSave' %}",
+		    type: 'post',
+		    contentType: 'application/json',
+		    dataType: 'json',
+		    data:JSON.stringify({
+		    	'txtScanId' : $("#txtScanId").val(),
+	            'selPid' : $("#selPid").val(),
+	            'selDataType' : $("#selDataType").val(),
+	            'txtAcq' : $("#txtAcq").val(),
+	            'txtRec' : $("#txtRec").val(),
+	            'txtTask' : $("#txtTask").val(),
+	            'selSuffix' : $("#selSuffix").val()
+		    }),
+		    success: function(data) {
+		    	var size = data.length;
+		    	if(size != 2) {
+		    		alert("[Meta Save] Check error log.");
+		    	} else {
+					alert(data[1]);
+		    	}
+		    },
+		    failure: function(data) { 
+		        alert('[Meta Save] Failure.');
+		    }
+		});
+	}
+}
+
+
+//---------------------------------------
+//  Validate Check
+//---------------------------------------
+function validateCheck() {
+	
+	var pid = $("#selPid").val();
+	if(pid == "") {
+		alert("Please select 'PID'.");
+		$("#selPid").focus();
+		return false;
+	}
+
+	var dataType = $("#selDataType").val();
+	if(dataType == "") {
+		alert("Please select 'Data Type'.");
+		$("#selDataType").focus();
+		return false;
+	}
+	
+	// special character check
+	if($("#txtTask").val() != "") {
+		if(!f_checkSpecial("txtTask")) {
+			return false;
+		}
+	}
+	if($("#txtAcq").val() != "") {
+		if(!f_checkSpecial("txtAcq")) {
+			return false;
+		}
+	}
+	if($("#txtRec").val() != "") {
+		if(!f_checkSpecial("txtRec")) {
+			return false;
+		}
+	}
+	
+	
+	// functional MRI
+	if(dataType == "F") {
+		// required: task, suffix
+		return checkItemValue("txtTask", "Task") && checkItemValue("selSuffix", "Suffix");
+	}
+	// fMRI infusion
+	else if(dataType == "I") {
+		// required: suffix
+		return checkItemValue("selSuffix", "Suffix");
+	}
+	// DWI
+	else if(dataType == "D") {
+		// required: suffix
+		return checkItemValue("selSuffix", "Suffix");
+	}
+	// field Map
+	else if(dataType == "M") {
+		// required: suffix
+		return checkItemValue("selSuffix", "Suffix");
+	}
+	// Structural Imaging
+	else if(dataType == "A") {
+		// required: suffix
+		return checkItemValue("selSuffix", "Suffix");
+	}
+	// etc
+	else {
+		alert("validate error");
+		return false;
+	}
+}
+
+
+//---------------------------------------
+//  Item's Value Check
+//---------------------------------------
+function checkItemValue(id, name) {
+	if($("#" + id).val() == "") {
+		alert("Please edit '" + name + ".'");
+		$("#" + id).focus();
+		return false;
+	} else {
+		return true;
+	}
+}
+
+
+//---------------------------------------
+//  reload main list when close modal popup
+//---------------------------------------
+function reloadMain() {
+	document.mainForm.action = "{% url 'pjo:mapInit' %}";
+	document.mainForm.submit();
+}
+
+
+
+//---------------------------------------
+//  Click Check All
+//---------------------------------------
+function checkAll() {
+	
+	if($("#chkAll").is(":checked")) {
+		
+		var scanId = "";
+		var metaYn = "";
+		var deriveYn = "";
+		$("input:checkbox[name=chkChoice]").each(function(){
+			scanId = $(this).val();
+			metaYn = $("#arrMetaYn_" + scanId).val();
+			if(metaYn == "Y") {
+				deriveYn = $("#arrDeriveYn_" + scanId).val();
+				if(deriveYn == "N") {
+					$(this).prop("checked", true);
+				}
+			}
+		});
+		
+	} else {
+		$("input:checkbox[name='chkChoice']").prop("checked", false);
+	}
+}
+
+
+//---------------------------------------
+//  Derive
+//---------------------------------------
+function derive() {
+	
+	var size = $("input:checkbox[name='chkChoice']:checked").length;
+	
+	if(size == 0) {
+		alert("Please select scan which you want to derive.");
+	} else {
+		
+		var checkedValues = "";
+		var progressTF = true;
+		$("input:checkbox[name='chkChoice']:checked").each(function(){
+			
+			var scanId = $(this).val();
+			var metaYn = $("#arrMetaYn_" + scanId).val();
+			if(metaYn == "N") {
+				alert("Please edit meta data first.");
+				$("#alinkMetaEdit_" + scanId).focus();
+				progressTF = false;
+				return false;
+			}
+			
+			var deriveYn = $("#arrDeriveYn_" + scanId).val();
+			if(deriveYn == "Y") {
+				alert("This is already derived.");
+				$(this).prop("checked", false);
+				progressTF = false;
+				return false;
+			}
+			
+			checkedValues = checkedValues + ":" + scanId;
+		});
+		
+		if(progressTF) {
+			$("#txtSelectedScan").val(checkedValues);
+			
+			document.mainForm.action = "{% url 'pjo:derive' %}";
+			document.mainForm.submit();		
+		}
+	}
+}
+
+
+
+//---------------------------------------
+//  Download
+//---------------------------------------
+function download(scanId) {
+	$("#txtDownScanId").val(scanId);
+	document.mainForm.action = "{% url 'pjo:downloadSingleFile' %}";
+	document.mainForm.submit();		
+}
+
+
+
+//---------------------------------------
+//  Get Json Info
+//---------------------------------------
+function getJsonInfo(scanId) {
+	
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:downloadJsonFile' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+	    	'txtScanId' : scanId,
+	    	'txtSessionId' : $("#txtSessionId").val(),
+	    }),
+	    success: function(data) {
+	    	var txtLi = "";
+	    	var txtFileName = "";
+			$.each(data, function(key, value) {
+				if(key == "fileName") {
+					txtFileName = value;
+				} else {
+					txtLi = txtLi + "<li><label>" + key + ":</label><input type='text' value='" + value + "' readonly/></li>";
+				}
+			});
+			$("#h3Json").html(txtFileName);
+			$("#ulJson").html(txtLi);
+	    },
+	    failure: function(data) { 
+	        alert('[Get Json Info] Failure.');
+	    }
+	});
+}
+
+
+
+
+
+//---------------------------------------
+//  get ED Key List
+//---------------------------------------
+function getEdKeyList() {
+
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:edKeyListForJson' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+	    }),
+	    success: function(data) {
+	    	var arrKey = data.toString().split(",");
+
+	    	var txtHtml = "<tr><th>ID</th><th>TITLE</th><th>RESEARCHER</th>";
+	  		$.each(arrKey, function(key, value) {
+	  			if(key <= 5) {
+					txtHtml = txtHtml + "<th>" + value + "</th>";
+	  			}
+	  		});
+			
+	    	txtHtml = txtHtml + "<th>Choose</th></tr>";
+			$("#theadED").html(txtHtml);
+	    },
+	    failure: function(data) { 
+	        alert('[Get Key Info] Failure.');
+	    }
+	});
+}
+
+
+
+
+//---------------------------------------
+//  Show/Hide Experimental Design List
+//---------------------------------------
+function controlEDArea(showYn) {
+
+	// Experimental Design (Show/Hide)
+	if(showYn == "Y") {
+
+		// show/hide
+		$("#h3Ed").show();
+		$("#divEd").show();
+		$("#divEdList").show();
+		
+		var strAcq = $("#txtAcq").val();
+		if (strAcq.startsWith("ED")) {
+			strAcq = strAcq.substr(2, 8);
+			$("#txtEdId").val(strAcq);
+			
+			// edSearch
+			edSearch();
+			
+		} else {
+			$("#txtEdId").val("");
+		}
+		
+		// clear items
+		$("#txtEdTitle").val("");
+		$("#txtResearcherName").val("");
+		$("#tbodyED").html("");
+		
+	} else {
+
+		// show/hide
+		$("#h3Ed").hide();
+		$("#divEd").hide();
+		$("#divEdList").hide();
+
+		// clear items
+		$("#txtEdId").val("");
+		$("#txtEdTitle").val("");
+		$("#txtResearcherName").val("");
+		$("#tbodyED").html("");
+	}
+}
+
+
+//---------------------------------------
+//  Show/Hide Experimental Design List
+//---------------------------------------
+function edShow(showYn) {
+	
+	if(showYn == "Y") {
+		$("#btnEdShow").hide();
+		$("#btnEdHide").show();
+		
+		// ACQ (Disable/Able)
+		$("#txtSelectedEdId").val("");
+		$("#txtAcq").prop('disabled', true);
+		
+	} else {
+		$("#btnEdShow").show();
+		$("#btnEdHide").hide();
+
+		// ACQ (Disable/Able)
+		$("#txtSelectedEdId").val("");
+		$("#txtAcq").prop('disabled', false);
+	}
+	
+	// ED Area
+	controlEDArea(showYn);
+}
+
+
+
+
+//---------------------------------------
+//  Get Experimental Design List
+//---------------------------------------
+function edSearch() {
+	
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:edListForJson' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+	    	'txtEdId' : $("#txtEdId").val(),
+	    	'txtEdTitle' : $("#txtEdTitle").val(),
+	    	'txtResearcherName' : $("#txtResearcherName").val(),
+	    }),
+	    success: function(data) {
+			
+	    	var txtHtml = "";
+	    	$.each(data, function(i, element) {
+	    		txtHtml = txtHtml + "<tr>";
+	    		$.each(element, function(k, v) {
+	    			if(k == "ED_ID") {
+		    		    txtHtml = txtHtml + "<td><input type='hidden' value='" + v + "' id='hidEdId_" + i + "' >" + v + "</td>";
+	    			} else {
+		    		    txtHtml = txtHtml + "<td>" + v + "</td>";
+	    			}
+	    		});
+	    		txtHtml = txtHtml + "<td><a href='javascript:edChoose(" + i + ")'>Choose</a></td></tr>";
+			});
+	    	
+	    	$("#tbodyED").html(txtHtml);
+	    },
+	    failure: function(data) { 
+	        alert('[edSearch] Failure.');
+	    }
+	});
+}
+
+
+
+//---------------------------------------
+//  Choose ED Row
+//---------------------------------------
+function edChoose(num) {
+
+	var strEdId = $("#hidEdId_" + num).val();
+	$("#txtSelectedEdId").val(strEdId);
+	$("#txtAcq").val("ED" + strEdId);
+}
+</script>
+
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+<div class="module filtered" id="searchlist">
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+
+	<!-- hidden -->
+	<input type="hidden" id="txtSelectedScan" name="txtSelectedScan"/>
+	<input type="hidden" id="txtDownScanId" name="txtDownScanId"/>
+	<input type="hidden" id="txtSelectedEdId" name="txtSelectedEdId"/>
+	
+	<h3>Project info</h3>
+
+	<div id="toolbar">
+
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtProjectId">Project Name / ID : </label>
+					<input type="text" id="txtProjectName" name="txtProjectName" value="{{ txtProjectName }}" readonly/>
+					<input type="text" id="txtProjectId" name="txtProjectId" value="{{ txtProjectId }}" readonly/>
+				</li>
+				<li>
+					<label for="txtSubjectId">Subject Name / ID : </label>
+					<input type="text" id="txtSubjectName" name="txtSubjectName" value="{{ txtSubjectName }}" readonly/>
+					<input type="text" id="txtSubjectNum" name="txtSubjectNum" value="{{ txtSubjectNum }}" readonly/>
+					<input type="hidden" id="txtSubjectId" name="txtSubjectId" value="{{ txtSubjectId }}" />
+				</li>
+			</ul>
+			<ul class="items col2">
+				<li>
+					<label for="txtSessionId">Session Name / ID : </label>
+					<input type="text" id="txtSessionName" name="txtSessionName" value="{{ txtSessionName }}" readonly/>
+					<input type="text" id="txtSessionNum" name="txtSessionNum" value="{{ txtSessionNum }}" readonly/>
+					<input type="hidden" id="txtSessionId" name="txtSessionId" value="{{ txtSessionId }}" />
+				</li>
+				<li class="alignRight">
+					<input type="button" value="Back" class="default" id="btnBackToSession" onclick="backToSession()"/>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<h3>Source Data Info</h3>
+
+	<div id="toolbar">
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtSouceTitle">Source Title / ID : </label>
+					<input type="text" id="txtTitle" name="txtTitle" value="{{ txtTitle }}" readonly/>
+					<input type="text" id="txtSourceId" name="txtSourceId" value="{{ txtSourceId }}" readonly/>
+				</li>
+				<li class="alignRight">
+					<input type="button" value="Derive" class="default" id="btnDerive" onclick="derive()"/>
+				</li>
+			</ul>
+		</div>
+	</div>	
+	</form>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-choice">
+				<div class="text alignCenter">
+					<input type="checkbox" id="chkAll" name="chkAll" onclick="checkAll()">
+				</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-scanNum">
+				<div class="text alignCenter">Scan Num</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-protoNm">
+				<div class="text alignCenter">Protocol Name</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-metaYn">
+				<div class="text alignCenter">MetaData Y/N</div>
+				<div class="clear"></div>
+			</th>
+			
+			<th scope="col" class="column-meta">
+				<div class="text alignCenter">MetaData Edit</div>
+				<div class="clear"></div>
+			</th>
+			
+			<th scope="col" class="column-derivative">
+				<div class="text alignCenter">Derivative</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-matrix">
+				<div class="text alignCenter">Matrix</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-slices">
+				<div class="text alignCenter">Slices</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-frame">
+				<div class="text alignCenter">Frame</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-download">
+				<div class="text alignCenter">DownLoad</div>
+				<div class="clear"></div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+			{%	for row in resultList %}
+			<tr class="row1">
+				<td class="field-choice alignCenter">
+					<input type="checkbox" id="chkChoice_{{ row.id }}" name="chkChoice" value="{{ row.id }}">
+				</td>
+				<td class="field-scanNum alignCenter">{{ row.scan_num }}</td>
+				<td class="field-protoNm">
+				{% if row.derive_yn == "Y" %}
+					<a href="#openJsonModal" onclick="javascript:getJsonInfo('{{ row.id }}')">
+					{{ row.sch_proto_nm }}
+					</a>
+				{% else %}
+					{{ row.sch_proto_nm }}
+				{% endif %}
+				</td>
+				<td class="field-metaYn alignCenter">{{ row.meta_yn }}
+					<input type="hidden" id="arrMetaYn_{{ row.id }}" name="arrMetaYn" value="{{ row.meta_yn }}">
+				</td>
+				<td class="field-meta alignCenter">
+					<a href="#openModal" onclick="javascript:metaInit('{{ row.id }}')" id="alinkMetaEdit_{{ row.id }}">Edit</a>
+				</td>
+				<td class="field-derivative alignCenter">{{ row.derive_yn }}
+					<input type="hidden" id="arrDeriveYn_{{ row.id }}" name="arrDeriveYn" value="{{ row.derive_yn }}">
+				</td>
+				<td class="field-matrix alignCenter">{{ row.sch_matrix }}</td>
+				<td class="field-slices alignCenter">{{ row.sch_slices }}</td>
+				<td class="field-frame alignCenter">{{ row.sch_n_repet }}</td>
+				<td class="field-download alignCenter">
+				{% if row.derive_yn == "Y" %}
+					<a href="javascript:download('{{ row.id }}')">DownLoad</a>
+				{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+
+
+
+	<!-- Modal Layer -->
+	<div id="openModal" class="modalDialog">
+	
+		<div>
+			<a href="#close" onclick="javascript:reloadMain()" title="Close" class="close">X</a>
+
+			<h3>Scan Info</h3>
+			<div id="toolbar">
+				<ul class="modalItems">
+					<li>
+						<label for="txtScanNum">Source ID:</label>
+						<input type="text" id="txtScanNum" name="txtScanNum" readonly/>
+						<input type="text" id="txtProtoNm" name="txtProtoNm" size="50" readonly/>
+						<input type="hidden" id="txtScanId" name="txtScanId"/>
+					</li>
+				</ul>
+				<ul class="modalItems">
+					<li>
+						<label for="selPid">* PID:</label>
+						<select class="selectfilter" id="selPid" name="selPid" required>
+							<option value="">--Choose--</option>
+						</select>
+					</li>
+				</ul>
+				
+			</div>
+
+<!-- Delete -->
+<!-- 
+			<h3>Scan Header</h3>
+			<div class="modalDiv">
+				<ul class="modalItems modalCol2">
+					<li>
+						<label for="txtTe">TE(ms):</label>
+						<input type="text" id="txtEchoTime" name="txtEchoTime" readonly/>
+					</li>
+					<li>
+						<label for="txtTe">TR(ms):</label>
+						<input type="text" id="txtRepetTime" name="txtRepetTime" readonly/>
+					</li>
+				</ul>
+				<ul class="modalItems modalCol2">
+					<li>
+						<label for="txtTe">Matrix:</label>
+						<input type="text" id="txtSchMatrix" name="txtSchMatrix" readonly/>
+					</li>
+					<li>
+						<label for="txtTe">Slices:</label>
+						<input type="text" id="txtSchSlices" name="txtSchSlices" readonly/>
+					</li>
+				</ul>
+				<ul class="modalItems modalCol2">
+					<li>
+						<label for="txtTe">Frame:</label>
+						<input type="text" id="txtSchNRepet" name="txtSchNRepet" readonly/>
+					</li>
+					<li>
+						<label for="txtTe">Dim:</label>
+						<input type="text" id="txtSchSpat" name="txtSchSpat" readonly/>
+					</li>
+				</ul>
+			</div>
+ -->
+ 
+			<h3>Meta Data</h3>
+			<div class="modalDiv">
+				<ul class="modalItems">
+					<li>
+						<label for="txtTe">* Data Type:</label>
+						<select class="selectfilter" id="selDataType" name="selDataType" onchange="onChangeDataType()" required>
+							<option value="">--Choose--</option>
+						</select>
+					</li>
+				</ul>
+				<ul class="modalItems" id="ulTask">
+					<li>
+						<label for="txtTe">* TASK:</label>
+						<input type="text" id="txtTask" name="txtTask" required/>
+						<span class="spanComment">(Max Length: 10)</span>
+					</li>
+				</ul>
+				<ul class="modalItems" id="ulAcq">
+					<li>
+						<label for="txtTe">ACQ:</label>
+						<input type="text" id="txtAcq" name="txtAcq" />
+						<span class="spanComment">- Acquisition: For distinguish different parameter. (Max Length: 10)</span>
+					</li>
+				</ul>
+				<ul class="modalItems" id="ulRec">
+					<li>
+						<label for="txtTe">REC:</label>
+						<input type="text" id="txtRec" name="txtRec" />
+						<span class="spanComment">- Reconstruction: For distinguish different reconstruction algorithms.(Max Length: 10)</span>
+					</li>
+				</ul>
+				<ul class="modalItems" id="ulRun">
+					<li>
+						<label for="txtTe">RUN:</label>
+						<input type="text" id="txtRun" name="txtRun" readonly/>
+					</li>
+				</ul>
+				<ul class="modalItems modalCol2">
+					<li>
+						<label for="txtTe">* Suffix:</label>
+						<select class="selectfilter" id="selSuffix" name="selSuffix" required>
+							<option value="">--Choose--</option>
+						</select>
+					</li>
+					<li class="alignRight">
+						<input type="hidden" id="hidEdBtn" value="Y"/>
+						<input type="button" value="Use Experimental Design" class="default" id="btnEdShow" onclick="edShow('Y')"/>
+						<input type="button" value="No Use Experimental Design" class="default" id="btnEdHide" onclick="edShow('N')"/>
+						<input type="button" value="Save" class="default" id="btnMetaSave" onclick="metaSave()"/>
+					</li>
+				</ul>
+			</div>
+			
+			
+			<h3 id="h3Ed">Experimental Design</h3>
+			<div id="divEd" class="modalDiv">
+				<ul class="modalItems modalCol4">
+					<li>
+						<label for="txtEdId">ED Id:</label>
+						<input type="text" id="txtEdId" name="txtEdId" size="5"/>
+					</li>
+					<li>
+						<label for="txtEdTitle">ED Title:</label>
+						<input type="text" id="txtEdTitle" name="txtEdTitle" size="12"/>
+					</li>
+					<li>
+						<label for="txtResearcherName">Researcher:</label>
+						<input type="text" id="txtResearcherName" name="txtResearcherName" size="12"/>
+					</li>
+					<li class="alignRight">
+						<input type="button" value="Search" class="default" id="btnEdSearch" onclick="edSearch()"/>
+					</li>
+				</ul>
+			</div>
+			<div id="divEdList">
+				<table>
+					<thead id="theadED">
+					</thead>
+					<tbody id="tbodyED">
+					</tbody>
+				</table>
+			</div>
+			
+		</div>
+	</div>
+	<!-- end of Modal Layer -->
+
+
+
+
+
+
+
+	<!-- Modal Layer -->
+	<div id=openJsonModal class="modalDialog">
+	
+		<div>
+			<a href="#close" title="Close" class="close">X</a>
+
+			<h3 id="h3Json"></h3>
+			<div id="toolbar">
+				<ul class="modalItems" id="ulJson">
+				</ul>
+			</div>
+
+		</div>
+	</div>
+	<!-- end of Modal Layer -->
+
+
+
+
+
+
+</div>
+</div>
+
+{% endblock %}
+
+
+

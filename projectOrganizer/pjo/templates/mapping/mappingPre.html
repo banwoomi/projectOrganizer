@@ -1,0 +1,344 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+
+
+//---------------------------------------
+//  onLoad
+//---------------------------------------
+$(function(){
+	$("#selMappingYn").val("N");
+});
+
+
+
+
+//---------------------------------------
+//  Go Back To Session
+//---------------------------------------
+function backToSession() {
+	document.mainForm.action = "{% url 'pjo:sessionList' %}";
+	document.mainForm.submit();
+}
+
+
+
+//---------------------------------------
+//  Mapping Session & Source
+//---------------------------------------
+function mapping() {
+
+	var selectedSourceId = $("input[name=rdoChoice]:checked").val();
+	
+	if(!selectedSourceId) {
+		alert("Please select source for mapping");
+	} else {
+		
+		mappingYn = $("#arrMappingYn_" + selectedSourceId).val();
+		if(mappingYn == "Y") {
+			alert("This source is already mapped.[Source ID: " + selectedSourceId + "]");
+		} else {
+			$("#txtSourceId").val(selectedSourceId);
+
+			document.mainForm.action = "{% url 'pjo:mapMapping' %}";
+			document.mainForm.submit();
+		}
+	}
+}
+
+
+
+//---------------------------------------
+//  Search Source
+//---------------------------------------
+function searchPagingList(pageNum) {
+	$("#txtPage").val(pageNum);
+
+	document.mainForm.action = "{% url 'pjo:mapSourceList' %}";
+	document.mainForm.submit();
+}
+
+
+//---------------------------------------
+//  [POP UP] Source Info
+//---------------------------------------
+function scanList(source_id) {
+
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:mapAjaxScanList' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+            'txtSourceId' : source_id
+	    }),
+	    success: function(data) {
+	    	var size = data.length;
+	    	var tdText = "";
+	    	var txtScan = "";
+	        for(i=0; i<size; i++) {
+	        	var arrScan = data[i].split("|");
+	        	txtScan = "<td>" + i + "</td><td>" + arrScan.join("</td><td>") + "</td>";
+	        	tdText = tdText + "<tr>" + txtScan + "</tr>";
+	        }
+	        
+	        $('#scanList').html(tdText);
+	        
+	    },
+	    failure: function(data) { 
+	        alert('[Scan List] Failure.');
+	    }
+	});
+}
+
+
+
+
+
+
+
+</script>
+
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+<div class="module filtered" id="searchlist">
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+
+	<h3>Project info</h3>
+
+	<div id="toolbar">
+	
+		<!-- hidden -->
+		<input type="hidden" id="txtSessionId" name="txtSessionId">
+		<input type="hidden" id="sourceId" name="sourceId">
+		<input type="hidden" id="txtSourceId" name="txtSourceId">
+		<input type="hidden" id="txtPage" name="txtPage">
+		
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtProjectId">Project Name / ID : </label>
+					<input type="text" id="txtProjectName" name="txtProjectName" value="{{ txtProjectName }}" readonly/>
+					<input type="text" id="txtProjectId" name="txtProjectId" value="{{ txtProjectId }}" readonly/>
+				</li>
+				<li>
+					<label for="txtSubjectId">Subject Name / ID : </label>
+					<input type="text" id="txtSubjectName" name="txtSubjectName" value="{{ txtSubjectName }}" readonly/>
+					<input type="text" id="txtSubjectNum" name="txtSubjectNum" value="{{ txtSubjectNum }}" readonly/>
+					<input type="hidden" id="txtSubjectId" name="txtSubjectId" value="{{ txtSubjectId }}" />
+				</li>
+			</ul>
+			<ul class="items col2">
+				<li>
+					<label for="txtSessionId">Session Name / ID : </label>
+					<input type="text" id="txtSessionName" name="txtSessionName" value="{{ txtSessionName }}" readonly/>
+					<input type="text" id="txtSessionNum" name="txtSessionNum" value="{{ txtSessionNum }}" readonly/>
+					<input type="hidden" id="txtSessionId" name="txtSessionId" value="{{ txtSessionId }}" />
+				</li>
+				<li class="alignRight">
+					<input type="button" value="Back" class="default" id="btnBackToSession" onclick="backToSession()"/>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<h3>Source Data Info</h3>
+
+	<div id="toolbar">
+		<div>
+			<ul class="items col3">
+				<li>
+					<label for="txtSouceTitle">Source Title : </label>
+					<input type="text" id="txtSourceTitle" name="txtSourceTitle" value="{{ txtSourceTitle }}"/>
+				</li>
+				<li>
+					<label for="selMappingYn">Mapping Y/N : </label>
+					<select class="selectfilter" id="selMappingYn" name="selMappingYn">
+						<option value="">----Choose----</option>
+						<option value="Y" {% if 'Y' == selMappingYn %}selected{% endif %}>Yes</option>
+						<option value="N" {% if 'N' == selMappingYn %}selected{% endif %}>No</option>
+					</select>
+				</li>
+				<li class="alignRight">
+					<input type="button" value="Search" class="default" id="btnSearch" onclick="searchPagingList(1)"/>
+					&nbsp;
+					<input type="button" value="Mapping" class="default" id="btnMapping" onclick="mapping()"/>
+				</li>
+			</ul>
+		</div>
+	</div>	
+	</form>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-choice">
+				<div class="text"></div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-sourceId">
+				<div class="text">Source ID</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-sourceTitle">
+				<div class="text">Title</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-mappingYn">
+				<div class="text">Mapping Y/N</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-scanYn">
+				<div class="text">Scan Y/N</div>
+				<div class="clear"></div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+			{%	for row in resultList %}
+			<tr class="row1">
+				<td class="field-choice">
+					<input type="radio" id="rdoChoice_{{ row.source_id }}" name="rdoChoice" value="{{ row.source_id }}">
+				</td>
+				<td class="field-sourceId">
+					<a href="#openModal" onclick="scanList('{{ row.source_id }}')">{{ row.source_id }}</a>
+				</td>
+				<td class="field-sourceTitle">{{ row.title }}</td>
+				<td class="field-mappingYn">
+					{{ row.mapping_yn }}
+					<input type="hidden" id="arrMappingYn_{{ row.source_id }}" name="txtMappingYn" value="{{ row.mapping_yn }}">
+				</td>
+				<td class="field-scanYn">{{ row.scan_yn }}</td>
+			</tr>
+			{% endfor %}
+			
+
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+
+
+	<!-- paging -->
+	{% if resultList.paginator.count > 0 %}
+	<div class="paginator">
+        {% if resultList.has_previous %}
+            <a href="javascript:searchPagingList({{ resultList.previous_page_number }})">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ resultList.number }} of {{ resultList.paginator.num_pages }}.
+        </span>
+
+        {% if resultList.has_next %}
+            <a href="javascript:searchPagingList( {{ resultList.next_page_number }} )">next</a>
+        {% endif %}
+	</div>
+	{% endif %}
+	<!-- end of paging -->
+	
+
+
+	<!-- Modal Layer -->
+	<div id="openModal" class="modalDialog">
+		<div>
+			<a href="#close" title="Close" class="close">X</a>
+			<h3>Scan List</h3>
+			<table id="scanlist">
+				<thead>
+				<tr>
+					<th scope="col" class="column-no">
+						<div class="text">No</div>
+						<div class="clear"></div>
+					</th>
+		
+					<th scope="col" class="column-scanNum">
+						<div class="text">Scan Num</div>
+						<div class="clear"></div>
+					</th>
+
+					<th scope="col" class="column-protoNm">
+						<div class="text">Protocol Name</div>
+						<div class="clear"></div>
+					</th>
+
+					<th scope="col" class="column-echoTime">
+						<div class="text">TE(ms)</div>
+						<div class="clear"></div>
+					</th>
+
+					<th scope="col" class="column-repetTime">
+						<div class="text">TR(ms)</div>
+						<div class="clear"></div>
+					</th>
+		
+					<th scope="col" class="column-matrix">
+						<div class="text">Matrix</div>
+						<div class="clear"></div>
+					</th>
+
+					<th scope="col" class="column-slices">
+						<div class="text">Slices</div>
+						<div class="clear"></div>
+					</th>
+		
+					<th scope="col" class="column-frame">
+						<div class="text">Frame</div>
+						<div class="clear"></div>
+					</th>
+		
+					<th scope="col" class="column-dim">
+						<div class="text">Dim</div>
+						<div class="clear"></div>
+					</th>
+		
+				</tr>
+				</thead>
+				<tbody id="scanList">
+				</tbody>
+			</table>			
+		</div>
+	</div>
+	<!-- end of Modal Layer -->
+
+
+</div>
+</div>
+
+{% endblock %}
+
+
+

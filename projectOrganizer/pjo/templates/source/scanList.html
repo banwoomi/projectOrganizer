@@ -1,0 +1,126 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  Go Back To Source List
+//---------------------------------------
+function backToSource() {
+	
+	document.mainForm.action = "{% url 'pjo:sourceInit' %}";
+	document.mainForm.submit();
+}
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+
+
+<div id="content-main">
+<div class="module filtered" id="searchlist">
+	<div id="toolbar">
+
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+
+		<!-- hidden -->
+		<input type="hidden" id="txtScanNum" name="txtScanNum">
+		
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtProjectId">Source ID / TITLE :</label>
+					<input type="text" id="txtSourceId" name="txtSourceId" value="{{ txtSourceId }}" readonly/>
+					<input type="text" id="txtTitle" name="txtTitle" value="{{ txtTitle }}" readonly/>
+				</li>
+				<li>
+					<input type="button" value="Back" class="default" id="btnSource" onclick="backToSource()"/>
+				</li>
+			</ul>
+		</div>
+	</form>
+	</div>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-scanNum">
+				<div class="text">Scan Num</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-protoNm">
+				<div class="text">Protocol Name</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-echoTime">
+				<div class="text transformNone alignCenter">TE(ms)</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-repetTime">
+				<div class="text transformNone alignCenter">TR(ms)</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-matrix">
+				<div class="text alignCenter">Matrix</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-slices">
+				<div class="text">Slices</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-frame">
+				<div class="text">Frame</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-dim">
+				<div class="text">Dim</div>
+				<div class="clear"></div>
+			</th>
+
+		</tr>
+		</thead>
+		<tbody>
+		{%	for row in resultList %}
+			<tr class="row1">
+				<td class="field-scanNum">{{ row.scan_num }}</td>
+				<td class="field-protoNm">{{ row.sch_proto_nm }}</td>
+				<td class="field-echoTime alignCenter">{{ row.sch_echo_time }}</td>
+				<td class="field-repetTime alignCenter">{{ row.sch_repet_time }}</td>
+				<td class="field-matrix alignCenter">{{ row.sch_matrix }}</td>
+				<td class="field-slices alignCenter">{{ row.sch_slices }}</td>
+				<td class="field-frame alignCenter">{{ row.sch_n_repet }}</td>
+				<td class="field-dim alignCenter">{{ row.sch_spat }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+
+	
+	
+</div>
+</div>
+
+{% endblock %}
+	

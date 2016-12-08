@@ -1,0 +1,210 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  onLoad
+//---------------------------------------
+$(function(){
+	
+	var strEdTitle = $("#txtEdTitle").val();
+	
+	if(strEdTitle == "") {
+		$("#divKeyValue").hide();
+	} else {
+		$("#divKeyValue").show();
+	}
+});
+
+
+
+//---------------------------------------
+//  Choose Keyword
+//---------------------------------------
+function chooseKeyword() {
+
+	if(validationCheck("keyword")) {
+		document.mainForm.action = "{% url 'pjo:edKeyChoose' %}";
+		document.mainForm.submit();
+	}
+}
+
+
+
+//---------------------------------------
+//  Save ED Values
+//---------------------------------------
+function saveValues() {
+	
+	if(validationCheck("value")) {
+		document.mainForm.action = "{% url 'pjo:edKeyValueModify' %}";
+		document.mainForm.submit();
+	}
+}
+
+
+//---------------------------------------
+//  Validation Check before INSERT / Update
+//---------------------------------------
+function validationCheck(flag) {
+	
+	if(flag == "keyword") {
+		if($("#txtEdTitle").val() == "") {
+			alert("Fill the Experimental Design Title");
+			$("#txtEdTitle").focus();
+			return false;
+		}
+		
+		// check modify title or add keyword
+		var orgTitle = $("#txtEdTitleOrigin").val();
+		if(orgTitle == $("#txtEdTitle").val()) {
+			var chkCount = $("input:checkbox[name='chkKeyword']:checked").not(':disabled').length;
+			
+			if(chkCount < 1) {
+				alert("Please select keyword.");
+				$("input:checkbox[name='chkKeyword']").focus();
+				return false;
+			}
+		}
+
+	} else if(flag == "value") {
+		
+		var failCnt = 0;
+		$("input[class~='inputValues']").each(function() {
+			
+			if($(this).val() == "") {
+				var label = $("label[for='" + this.id + "']").text();
+				alert("Fill the value. [" + label + "]");
+				$(this).focus();
+				failCnt = failCnt + 1;
+				return false;
+			} else {
+				
+				var pattern = $(this).attr("pattern");
+
+				if(pattern == "I") {
+					if(!f_checkNumOnly($(this).attr("id"))) {
+						failCnt = failCnt + 1;
+						return false;
+					}
+				} else if(pattern == "F") {
+					if(!f_checkFloatOnly($(this).attr("id"))) {
+						failCnt = failCnt + 1;
+						return false;
+					}
+				} else if(pattern == "L") {
+					if(!f_checkNumListOnly($(this).attr("id"))) {
+						failCnt = failCnt + 1;
+						return false;
+					}
+				} 
+			}
+		}); 	
+
+		if(failCnt == 0) {
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		return false;
+	}
+	return true;
+}
+
+
+
+//---------------------------------------
+//  go to List
+//---------------------------------------
+function gotoEdList() {
+	$("#txtEdTitle").val("");
+	document.mainForm.action = "{% url 'pjo:edList' %}";
+	document.mainForm.submit();
+}
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+	
+	<!-- hidden -->
+	<input type="hidden" id="txtEdId" name="txtEdId" value="{{ edId }}" />
+	<input type="hidden" id="txtEdTitleOrigin" name="txtEdTitleOrigin" value="{{ edTitle }}" />
+
+	<div>
+		<fieldset class="module aligned ">
+			
+		<h2>{{ subTitle1 }}</h2>
+
+		<div class="form-row field-txtEdTitle">
+			<div>
+				<label for="txtEdTitle">Experimental Design Title:</label>
+				<input class="vTextField" id="txtEdTitle" maxlength="30" name="txtEdTitle" type="text" value="{{ edTitle }}" />
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div>
+				<label for="spanChkKeyword">Choose Keyword:</label>
+				{%	for key in keyList %}
+				<span class="spanChkKeyword">
+					<label class="chkLabel">
+						<input type="checkbox" class="vCheckboxField" id="chkKeyword_{{ key.keyword_id }}" name="chkKeyword" 
+						 value="{{ key.keyword_id }}" {% if key.keyword_id in regKeyList %} checked disabled {% endif %}/> {{ key.keyword_name }}
+					</label>
+				</span>
+				{%	endfor %}
+				<input type="button" value="SAVE" class="default" id="btnChoose" onclick="chooseKeyword()"/>
+			</div>
+		</div>
+		</fieldset>
+	</div>
+
+	
+	<div id="divKeyValue">
+		<fieldset class="module aligned ">
+			
+		<h2>{{ subTitle2 }}</h2>
+		{% for detail in detailList%}
+		<div class="form-row">
+			<div>
+				<label for="txt{{ detail.KEYWORD_NAME }}">{{ detail.KEYWORD_NAME }}:</label>
+				<input class="{%if detail.DATA_TYPE == 'C' %}vTextField{%else%}vIntegerField{%endif%} inputValues" 
+				id="txt{{ detail.KEYWORD_NAME }}" name="txtKey_{{ detail.ID }}" 
+				maxlength="{{ detail.MAX_LENGTH }}" type="text" 
+				value="{{ detail.ED_VALUE|default:'' }}" pattern="{{detail.DATA_TYPE}}"
+				/>&nbsp;{{ detail.UNIT }}
+			</div>
+		</div>
+		{% endfor %}
+		</fieldset>
+	</div>
+
+	<div class="submit-row">
+		<input type="button" value="SAVE VALUES" class="default" id="btnRegister" onclick="saveValues()"/>
+		<input type="button" value="LIST" class="default" id="btnList" onclick="gotoEdList()"/>
+	</div>
+
+	</form>
+</div>
+
+{% endblock %}
+
+
+

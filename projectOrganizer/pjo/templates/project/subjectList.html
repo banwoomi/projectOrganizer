@@ -1,0 +1,294 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  go back to project
+//---------------------------------------
+function backToProject() {
+	document.mainForm.action = "{% url 'pjo:projectList' %}";
+	document.mainForm.submit();
+}
+
+
+//---------------------------------------
+//  Add Row
+//---------------------------------------
+function addRow(tbName) {
+
+	try {
+		// find Table, add row
+		var tbody = $('#' + tbName + ' tbody');
+		var rows = tbody.find('tr').length;
+		var newRow = tbody.find('tr:last').clone(true).appendTo(tbody);
+
+		// clear controls
+		addRowControlInit(newRow, rows);
+	}
+	catch (e) {
+		alert(e.Message);
+	}
+}
+
+
+
+//---------------------------------------
+//  Clear controls of new row
+//      Existing Data's naming rule : subName_'subject num'        => subName_01
+//      New      Data's naming rule : subName_new_'row number'   => subName_new_2
+//---------------------------------------
+function addRowControlInit(jRowobj, rowCnt){
+	
+	jRowobj.find(':input').val('').each(function () {
+		var id = this.id
+		
+		if (id) {
+			this.id = this.id.split('_')[0] + '_new_' + rowCnt;
+		}
+	});
+
+
+	jRowobj.find('span').each(function(){
+		
+		var id = this.id
+		
+		var spanId = this.id.split('_')[0];
+		
+		if(spanId == 'spanSub') {
+			this.id = spanId + '_new_' + rowCnt;
+			$("#" + this.id).html('');
+		}
+		else if(spanId == 'btnSub') {
+			this.id = spanId + '_new_' + rowCnt;
+			$("#" + this.id).html('<span onclick="f_add(' + rowCnt + ')" class="spanLink">ADD</span>');
+		}
+		else if(spanId == 'spanSesCnt') {
+			this.id = spanId + '_new_' + rowCnt;
+			$("#" + this.id).html('<span>0</span>');
+		}
+		else if(spanId == 'spanDeriveCnt') {
+			this.id = spanId + '_new_' + rowCnt;
+			$("#" + this.id).html('<span>0</span>');
+		}
+	});
+
+}
+
+
+
+//---------------------------------------
+//  modify subject
+//---------------------------------------
+function f_modify(subjectId) {
+	
+	// special character check
+	if(!f_checkSpecial("txtSubName_" + subjectId)) {
+		return false;
+	}
+	
+	var subjectName = $("#txtSubName_" + subjectId).val();
+	var subjectComment = $("#txtSubComment_" + subjectId).val();
+	
+	$("#txtSubjectId").val(subjectId);
+	$("#txtSubjectName").val(subjectName);
+	$("#txtSubjectComment").val(subjectComment);
+	
+	// modify
+	document.mainForm.action = "{% url 'pjo:subjectModify' %}";
+	document.mainForm.submit();
+
+	$("#txtSubjectId").val("");
+	$("#txtSubjectName").val("");
+	$("#txtSubjectComment").val("");
+
+}
+
+
+
+//---------------------------------------
+//  add new subject
+//---------------------------------------
+function f_add(rowCnt) {
+
+	// special character check
+	if(!f_checkSpecial("txtSubName_new_" + rowCnt)) {
+		return false;
+	}
+	
+	var subjectName = $("#txtSubName_new_" + rowCnt).val();
+	var subjectComment = $("#txtSubComment_new_" + rowCnt).val();
+
+	$("#txtSubjectName").val(subjectName);
+	$("#txtSubjectComment").val(subjectComment);
+	
+	// add
+	document.mainForm.action = "{% url 'pjo:subjectRegister' %}";
+	document.mainForm.submit();
+	
+	$("#txtSubjectId").val("");
+	$("#txtSubjectName").val("");
+	$("#txtSubjectComment").val("");
+}
+
+
+//---------------------------------------
+//  Go To Session Page
+//---------------------------------------
+function goToSession(subjectId) {
+
+	$("#txtSubjectId").val(subjectId);
+
+	document.mainForm.action = "{% url 'pjo:sessionList' %}";
+	document.mainForm.submit();
+}
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+<div class="module filtered" id="searchlist">
+	<div id="toolbar">
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+	
+		<!-- hidden -->
+		<input type="hidden" id="txtSubjectId" name="txtSubjectId">
+		<input type="hidden" id="txtSubjectName" name="txtSubjectName">
+		<input type="hidden" id="txtSubjectComment" name="txtSubjectComment">
+		
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtProjectId">Project Name / ID :</label>
+					<input type="text" id="txtProjectName" name="txtProjectName" value="{{ txtProjectName }}" readonly/>
+					<input type="text" id="txtProjectId" name="txtProjectId" value="{{ txtProjectId }}" readonly/>
+				</li>
+				<li>
+					<input type="button" value="Back" class="default" id="btnSearch" onclick="backToProject()"/>
+					&nbsp;
+					<input type="button" value="Add Row" class="default" id="btnAddRow" onclick="addRow('result_list')"/>
+				</li>
+			</ul>
+		</div>
+	</form>
+	</div>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-subjectNum">
+				<div class="text">Subject ID</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-subjectName">
+				<div class="text">Subject Name</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-subjectComment">
+				<div class="text">Subject Comment</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col"  class="column-sesCnt alignCenter">
+				<div class="text">Session Count</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col"  class="column-deriveCnt alignCenter">
+				<div class="text">Derive Count</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col"  class="column-useYn alignCenter">
+				<div class="text">Use Y/N</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-add alignCenter">
+				<div class="text">Save Subject</div>
+				<div class="clear"></div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		{%	for row in subjectList %}
+			<tr class="row1">
+				<th class="field-subjectNum">
+					<span id="spanSub_{{ row.id}}" >
+						<a href="javascript:goToSession('{{ row.id }}')">{{ row.subject_num }}</a>
+					</span>
+				</th>
+				<td class="field-subjectName">
+					sub-<input type="text" id="txtSubName_{{ row.id}}" name="txtSubName" value="{{ row.subject_nm }}"  maxlength="20"/>
+				</td>
+				<td class="field-subjectComment">
+					<input type="text" id="txtSubComment_{{ row.id}}"
+							name="txtSubComment" value="{{ row.subject_cmt }}"
+							maxlength="100"/>
+						</td>
+				<td class="field-sesCnt alignCenter">
+					<span id="spanSesCnt">{{ row.ses_cnt }}</span>
+				</td>
+				<td class="field-deriveCnt alignCenter">
+					<span id="spanDeriveCnt">{{ row.derive_cnt }}</span>
+				</td>
+				<td class="field-useYn alignCenter">{{ row.use_yn }}</td>
+				<td class="field-add alignCenter">
+					<span id="btnSub_{{ row.id}}">
+						<span onclick="f_modify('{{ row.id}}')" class="spanLink">MODIFY</span>
+					</span>
+				</td>
+			</tr>
+		{% empty %}
+			<tr class="row1">
+				<th class="field-subjectId">
+					<span id="spanSub_new_0"></span>
+				</th>
+				<td class="field-subjectName">
+					sub-<input type="text" id="txtSubName_new_0" name="txtSubName_new_0"  maxlength="20"/>
+				</td>
+				<td class="field-subjectComment">
+					<input type="text" id="txtSubComment_new_0" name="txtSubComment_new_0" maxlength="100"/>
+				</td>
+				<td class="field-sesCnt alignCenter">0</td>
+				<td class="field-deriveCnt alignCenter">0</td>
+				<td class="field-useYn">Y</td>
+				<td class="field-add">
+					<span id="btnSub_new_0">
+						<span onclick="f_add('0')" class="spanLink">ADD</span>
+					</span>
+				</td>
+			</tr>
+		{% endfor %}
+			
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+	
+</div>
+</div>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,87 @@
+
+<div id="divNavigation">
+	<div id="divButtonGroup">
+	
+	<!-- Project -->
+	{% if navStage == 0 %}
+		<span class="navActive" id="spanProject">Project</span>
+		<span class="navDeactive" id="spanSubject">Subject</span>
+		<span class="navDeactive" id="spanSession">Session</span>
+		<span class="navDeactive" id="spanMapping">Mapping</span>
+
+	<!-- Subject -->
+	{% elif navStage == 1 %}
+		<a onclick="goTo(0)"><span class="navPass" id="spanProject">Project</span></a>
+		<span class="navActive" id="spanSubject">Subject</span>
+		<span class="navDeactive" id="spanSession">Session</span>
+		<span class="navDeactive" id="spanMapping">Mapping</span>
+
+	<!-- Session -->
+	{% elif navStage == 2 %}
+		<a onclick="goTo(0)"><span class="navPass" id="spanProject">Project</span></a>
+		<a onclick="goTo(1)"><span class="navPass" id="spanSubject">Subject</span></a>
+		<span class="navActive" id="spanSession">Session</span>
+		<span class="navDeactive" id="spanMapping">Mapping</span>
+
+	<!-- Mapping -->
+	{% elif navStage == 3 %}
+		<a onclick="goTo(0)"><span class="navPass" id="spanProject">Project</span></a>
+		<a onclick="goTo(1)"><span class="navPass" id="spanSubject">Subject</span></a>
+		<a onclick="goTo(2)"><span class="navPass" id="spanSession">Session</span></a>
+		<span class="navActive" id="spanMapping">Mapping</span>
+		<span class="navDeactive" id="spanDerivative">Derivative</span>
+
+	<!-- Derivative -->
+	{% elif navStage == 4 %}
+		<a onclick="goTo(0)"><span class="navPass" id="spanProject">Project</span></a>
+		<a onclick="goTo(1)"><span class="navPass" id="spanSubject">Subject</span></a>
+		<a onclick="goTo(2)"><span class="navPass" id="spanSession">Session</span></a>
+		<span class="navActive" id="spanDerivative">Derivative</span>
+
+	{% else %}
+		<span class="navDeactive" id="spanProject">Project</span>
+		<span class="navDeactive" id="spanSubject">Subject</span>
+		<span class="navDeactive" id="spanSession">Session</span>
+		<span class="navDeactive" id="spanMapping">Mapping</span>
+		<span class="navDeactive" id="spanDerivative">Derivative</span>
+	{% endif  %}
+
+	</div>
+	<div class="navLine">&nbsp;</div>
+</div>
+
+<!-- hidden -->
+<input type="hidden" id="navProjectId" name="navProjectId" value="{{ navProjectId }}">
+<input type="hidden" id="navSubjectId" name="navSubjectId" value="{{ navSubjectId }}">
+<input type="hidden" id="navSessionId" name="navSessionId" value="{{ navSessionId }}">
+
+
+<script type="text/javascript">
+
+function goTo(navNum) {
+
+	// go to Project
+	if(navNum == 0) {
+		document.mainForm.action = "{% url 'pjo:projectList' %}";
+		document.mainForm.submit();
+	}
+	// go to Subject
+	else if(navNum == 1) {
+		document.mainForm.action = "{% url 'pjo:subjectList' %}";
+		document.mainForm.submit();
+	} 
+	// go to Session
+	else if(navNum == 2) {
+		document.mainForm.action = "{% url 'pjo:sessionList' %}";
+		document.mainForm.submit();
+	} 
+	// go to Mapping
+	else if(navNum == 3) {
+	} 
+	// go to Derivative
+	else if(navNum == 4) {
+	}
+}
+
+</script>
+

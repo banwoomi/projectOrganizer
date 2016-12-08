@@ -1,0 +1,194 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  search
+//---------------------------------------
+function searchPagingList(pageNum) {
+	
+	$("#txtPage").val(pageNum);
+	document.mainForm.action = "{% url 'pjo:edList' %}";
+	document.mainForm.submit();
+}
+
+
+
+//---------------------------------------
+//  clear all inquiry condition
+//---------------------------------------
+function clearItem() {
+	$("#txtEdTitle").val("");
+	$("#txtResearcherName").val("");
+	$("input:checkbox[name='chkKeyword']:checked").prop("checked", false);
+}
+
+
+//---------------------------------------
+//  ED List modify
+//---------------------------------------
+function modifyED(edId) {
+
+	$("#txtEdId").val(edId);
+	document.mainForm.action = "{% url 'pjo:edModiInit' %}";
+	document.mainForm.submit();
+}
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+
+
+{% block content %}
+<div id="content-main">
+
+<div class="module filtered" id="searchlist">
+
+	<div id="toolbar">
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+	
+		<!-- hidden -->
+		<input type="hidden" id="txtEdId" name="txtEdId">
+	
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtEdTitle">ED Title:</label>
+					<input class="vTextField" id="txtEdTitle" maxlength="30" name="txtEdTitle" type="text" value="{{ txtEdTitle }}"/>
+				</li>
+				<li>
+					<label for="txtResearcherName">Researcher Name:</label>
+					<input class="vTextField" id="txtResearcherName" maxlength="30" name="txtResearcherName" type="text" value="{{ txtResearcherName }}"/>
+				</li>
+			</ul>
+			
+			<!-- Delete -->
+			<!-- 
+			<ul class="items">	
+				<li>
+					<label for="spanChkKeyword">Choose Keyword:</label>
+					{%	for key in keyList %}
+					<span class="spanChkKeyword">
+						<label class="chkLabel">
+							<input type="checkbox" class="vCheckboxField" id="chkKeyword_{{ key.keyword_id }}" name="chkKeyword" 
+							 value="{{ key.keyword_id }}" {% if key.keyword_id in regKeyList %} checked disabled {% endif %}/> {{ key.keyword_name }}
+						</label>
+					</span>
+					{%	endfor %}
+				</li>
+			</ul>
+			 -->
+			 
+			<ul class="items">	
+				<li>
+					<input type="button" value="Search" class="default" id="btnSearch" onclick="searchPagingList(1)"/>
+					&nbsp;
+					<input type="button" value="ClearAll" class="default" id="btnClearAll" onclick="clearItem()"/>
+				</li>
+			</ul>
+		</div>
+	</form>
+	</div>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-id">
+				<div class="text">ID</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-title">
+				<div class="text">ED Title</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-regName">
+				<div class="text">Researcher Name</div>
+				<div class="clear"></div>
+			</th>
+
+			{% for key in keyList%}
+			<th scope="col" class="column-{{ key.keyword_name }} alignCenter">
+				<div class="text">{{ key.keyword_name }}</div>
+				<div class="clear"></div>
+			</th>
+			{% endfor %}
+						
+			<th scope="col" class="column-detailView">
+				<div class="text">Modify</div>
+				<div class="clear"></div>
+			</th>
+
+		</tr>
+		</thead>
+		<tbody>
+			    
+			{% for row in resultList %}
+			<tr class="row1">
+				<td class="field-id">{{ row.ED_ID }}</td>
+				<td class="field-title">{{ row.ED_TITLE }}</td>
+				<td class="field-regName">{{ row.RESEARCHER_NAME }}</td>
+				
+				{% for key,value in row.items %}
+					{% with forloop.counter|add:"-3"|stringformat:"02d" as temp %}
+					{% with "Z_"|add:temp as temp1 %}
+					{% if key == temp1 %}
+						<td class="field-{{ key.keyword_id }} alignCenter">{{ value }}</td>
+					{% endif%}
+					{% endwith%}
+					{% endwith%}
+				{% endfor %}
+				<td class="field-detailView alignCenter">
+					<a href="javascript:modifyED('{{ row.ED_ID }}')">
+						MODIFY
+					</a>
+				</td>
+			</tr>
+			{% endfor %}
+
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+	
+
+	<!-- paging -->
+	{% if resultList.paginator.count > 0 %}
+	<div class="paginator">
+        {% if resultList.has_previous %}
+            <a href="javascript:searchPagingList({{ resultList.previous_page_number }})">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ resultList.number }} of {{ resultList.paginator.num_pages }}.
+        </span>
+
+        {% if resultList.has_next %}
+            <a href="javascript:searchPagingList( {{ resultList.next_page_number }} )">next</a>
+        {% endif %}
+	</div>
+	{% endif %}
+	<!-- end of paging -->
+		
+	
+</div>
+</div>
+
+{% endblock %}
+
+
+

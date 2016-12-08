@@ -1,0 +1,102 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<title>{% block title %}{% endblock %}</title>
+
+{% block extrastyle %}
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/forms.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/pjo.css' %}?{% now 'U'%}" />
+{% endblock %}
+
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script type="text/javascript" src="/static/js/utils.js?v=1.1"></script>
+
+<script type="text/javascript">
+function noEvent() {
+	if (event.keyCode == 116) {
+		event.keyCode = 2;
+		return false;
+	} else if (event.ctrlKey && (event.keyCode == 78 || event.keyCode == 82)) {
+		return false;
+	}
+}
+document.onkeydown = noEvent;
+
+</script>
+
+{% block extrahead %}{% endblock %}
+
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+</head>
+
+
+<body class="{% block bodyclass %}{% endblock %}" data-admin-utc-offset="{% now "Z" %}" oncontextmenu="return false">
+
+<!-- Container -->
+<div id="container">
+
+    <!-- Header -->
+    <div id="header">
+        <div id="branding">
+			<h1 id="site-name"><a href="{% url 'pjo:index' %}">Shih Lab Project Organizer</a></h1>
+        </div>
+        
+        {% block usertools %}
+        {% if request.session.member_id %}
+        <div id="user-tools">
+        
+            {% block welcome-msg %}
+                Welcome,
+                <strong>{{ request.session.member_id }}</strong>.&nbsp;&nbsp;&nbsp;
+            {% endblock %}
+
+            {% block userlinks %}
+                <a href="{% url 'pjo:profileForm' %}">My Profile</a> /
+                <a href="{% url 'pjo:signout' %}">Sign out</a>
+            {% endblock %}
+        </div>
+        {% else %}
+        <div id="user-tools">
+            <a href="{% url 'pjo:signinForm' %}">Sign In</a> /
+            <a href="{% url 'pjo:joinForm' %}">Join</a>
+        </div>
+        {% endif %}
+        {% endblock %}
+        
+        
+        
+        {% block nav-global %}{% endblock %}        
+
+    </div>
+    <!-- END Header -->
+
+    
+
+    <!-- Content -->
+    <div id="content" class="{% block coltype %}colM{% endblock %}">
+    
+		<!-- hidden -->
+		<input type="hidden" id="errMsg" name="errMsg" value="{{ errMsg }}">
+    
+        {% block pretitle %}{% endblock %}
+        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block content %}
+        {% block object-tools %}{% endblock %}
+        {{ content }}
+        {% endblock %}
+        {% block sidebar %}{% endblock %}
+        <br class="clear" />
+    </div>
+    <!-- END Content -->
+
+    {% block footer %}<div id="footer"></div>{% endblock %}
+</div>
+<!-- END Container -->
+
+</body>
+
+</html>

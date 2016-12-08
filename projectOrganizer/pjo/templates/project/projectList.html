@@ -1,0 +1,245 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  search
+//---------------------------------------
+function searchPagingList(pageNum) {
+	$("#txtPage").val(pageNum);
+	document.mainForm.action = "{% url 'pjo:projectList' %}";
+	document.mainForm.submit();
+}
+
+
+
+//---------------------------------------
+//  clear all inquiry condition
+//---------------------------------------
+function clearItem() {
+	$("#selInitial").val("");
+	$("#txtYear").val("");
+	$("#selAnimalType").val("");
+	$("#selMethodType").val("");
+	$("#txtProjectAim").val("");
+}
+
+
+//---------------------------------------
+//  Go To Subject Page
+//---------------------------------------
+function goToSubject(projectId) {
+	
+	$("#txtProjectId").val(projectId);
+
+	document.mainForm.action = "{% url 'pjo:subjectList' %}";
+	document.mainForm.submit();
+}
+
+
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+
+
+{% block content %}
+<div id="content-main">
+
+{% include "include/navigation.html" %}
+
+<div class="module filtered" id="searchlist">
+	<div id="toolbar">
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+	
+		<!-- hidden -->
+		<input type="hidden" id="txtProjectId" name="txtProjectId">
+		<input type="hidden" id="txtPage" name="txtPage">
+	
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="txtInitial">Researcher Initial:</label>
+					<select class="selectfilter" id="selInitial" name="selInitial">
+						<option value="">--Choose--</option>
+					{%	for initial in initialList %}
+						<option value="{{ initial.initial_nm }}" {% if initial.initial_nm == selInitial%} selected {% endif %}>{{ initial.initial_nm }}</option>
+					{%	endfor %}
+					</select>
+				</li>
+				<li>
+					<label for="txtYear">Year:</label>
+					<input class="vIntegerField" id="txtYear" maxlength="4" name="txtYear" type="text" value="{{ txtYear }}"/>
+				</li>
+			</ul>
+			<ul class="items col2">	
+				<li>
+					<label for="selAnimalType">Animal Species:</label>
+					<select class="selectfilter" id="selAnimalType" name="selAnimalType">
+						<option value="">--Choose--</option>
+					{%	for anitype in code002 %}
+						<option value="{{ anitype.code_id }}" {% if anitype.code_id == selAnimalType %} selected {% endif %}>{{ anitype.code_nm }}</option>
+					{%	endfor %}
+					</select>
+				</li>
+				<li>
+					<label for="selMethodType">Method Types:</label>
+					<select class="selectfilter" id="selMethodType" name="selMethodType">
+						<option value="">--Choose--</option>
+					{%	for methtype in code003 %}
+						<option value="{{ methtype.code_id }}" {% if methtype.code_id == selMethodType %} selected {% endif %}>{{ methtype.code_nm }}</option>
+					{%	endfor %}
+					</select>
+				</li>
+			</ul>
+			<ul class="items col2">	
+				<li>
+					<label for="txtProjectAim">Project Aim:</label>
+					<input class="vTextField" id="txtProjectAim" maxlength="200" name="txtProjectAim" type="text" value="{{ txtProjectAim }}"/>
+				</li>
+				<li>
+					<input type="button" value="Search" class="default" id="btnSearch" onclick="searchPagingList(1)"/>
+					&nbsp;
+					<input type="button" value="ClearAll" class="default" id="btnClearAll" onclick="clearItem()"/>
+				</li>
+			</ul>
+		</div>
+	</form>
+	</div>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-no">
+				<div class="text">ID</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-projectName">
+				<div class="text">Project Name</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col"  class="column-researcherName">
+				<div class="text">Researcher<br>Name</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-animalSpecies">
+				<div class="text">Animal<br>Species</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-methodType">
+				<div class="text">Method<br>Type</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-projectAim">
+				<div class="text">Project Aim</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-regDate">
+				<div class="text">Register Date</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-subCnt alignCenter">
+				<div class="text">Subject<br>Count</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-sesCnt alignCenter">
+				<div class="text">Session<br>Count</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-mapCnt alignCenter">
+				<div class="text">Mapping<br>Count</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-deriveCnt alignCenter">
+				<div class="text">Derive<br>Count</div>
+				<div class="clear"></div>
+			</th>
+			
+			<th scope="col" class="column-detailView alignCenter">
+				<div class="text">Detail<br>View</div>
+				<div class="clear"></div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+			{%	for row in resultList %}
+			<tr class="row1">
+				<td class="field-no">{{ row.PROJECT_ID }}</td>
+				<th class="field-projectName">
+					<a href="javascript:goToSubject('{{ row.PROJECT_ID }}')">   
+					{{ row.INITIAL_NM }}_{{ row.YEAR }}_{{ row.ANIMAL_TYPE }}_{{ row.METHOD_TYPE }}_{{ row.SERIAL_NO }}
+					</a>
+				</th>
+				<td class="field-researcherName">{{ row.NAME }}</td>
+				<td class="field-animalSpecies">{{ row.ANIMAL_NM }}</td>
+				<td class="field-methodType">{{ row.METHOD_NM }}</td>
+				<td class="field-projectName">{{ row.PROJECT_AIM }}</td>
+				<td class="field-regDate">{{ row.REG_DATE|date:'Y-m-d' }}</td>
+				<td class="field-subCnt alignCenter">{{ row.SUB_CNT }}</td>
+				<td class="field-sesCnt alignCenter">{{ row.SES_CNT }}</td>
+				<td class="field-mapCnt alignCenter">{{ row.MAP_CNT }}</td>
+				<td class="field-deriveCnt alignCenter">{{ row.DERIVE_CNT }}</td>
+				<td class="field-detailView alignCenter">
+					<a href="{% url 'pjo:projectDetail' row.PROJECT_ID %} ">
+						MODIFY
+					</a>
+				</td>
+			</tr>
+			{% endfor %}
+
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+	
+
+	<!-- paging -->
+	{% if resultList.paginator.count > 0 %}
+	<div class="paginator">
+        {% if resultList.has_previous %}
+            <a href="javascript:searchPagingList({{ resultList.previous_page_number }})">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ resultList.number }} of {{ resultList.paginator.num_pages }}.
+        </span>
+
+        {% if resultList.has_next %}
+            <a href="javascript:searchPagingList( {{ resultList.next_page_number }} )">next</a>
+        {% endif %}
+	</div>
+	{% endif %}
+	<!-- end of paging -->
+		
+	
+</div>
+</div>
+
+{% endblock %}
+
+
+

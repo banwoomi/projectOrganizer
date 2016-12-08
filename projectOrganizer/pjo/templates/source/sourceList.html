@@ -1,0 +1,309 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+
+<script type="text/javascript">
+
+//---------------------------------------
+//  Onload
+//---------------------------------------
+$(function() {
+	$('.datepicker').datepicker();
+	
+	var hidInit = $("#id_init").val();
+	if(!hidInit) {
+		searchPagingList(1);
+	}
+});
+
+
+
+//---------------------------------------
+//  search
+//---------------------------------------
+function searchPagingList(pageNum) {
+	
+	if(validCheck()) {
+		
+		$("#id_page").val(pageNum);
+		document.mainForm.action = "{% url 'pjo:sourceList' %}";
+		document.mainForm.submit();
+	}
+}
+
+
+//---------------------------------------
+//  valid Check
+//---------------------------------------
+function validCheck() {
+	
+	var strRegStart = $("#id_txtRegStart").val();
+	var strRegEnd = $("#id_txtRegEnd").val();
+	
+	if(strRegStart != "") {
+		if(strRegEnd == "") {
+			alert("Check end of Regstration Date.");
+			return false;
+		}
+	}
+
+	if(strRegEnd != "") {
+		if(strRegStart == "") {
+			alert("Check start of Regstration Date.");
+			return false;
+		}
+	}
+	return true;
+}
+
+
+
+//---------------------------------------
+//  clear every query condition
+//---------------------------------------
+function clearAll() {
+	$("#id_txtTitle"    ).val("");
+	$("#id_txtRegStart" ).val("");
+	$("#id_txtRegEnd"   ).val("");
+	$("#id_selScanYn"   ).val("");
+	$("#id_txtScanStart").val("");
+	$("#id_txtScanEnd"  ).val("");
+}
+
+
+
+//---------------------------------------
+//  registrate files
+//---------------------------------------
+function regFile() {
+	
+	// action
+	document.mainForm.action = "{% url 'pjo:addNewSource' %}";
+	document.mainForm.submit();
+}
+
+
+//---------------------------------------
+//  check scan
+//---------------------------------------
+function checkScan(source_id) {
+
+	// ajax header settup for CSRF
+	var csrftoken = f_getCookie('csrftoken');
+	
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!f_csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});	
+	
+	// Transaction
+	$.ajax({
+	    url: "{% url 'pjo:checkScan' %}",
+	    type: 'post',
+	    contentType: 'application/json',
+	    dataType: 'json',
+	    data:JSON.stringify({
+            'txtSourceId' : source_id
+	    }),
+	    success: function(data) {
+	    	if(data.length > 1) {
+	    		if(data[0] == "Y") {
+
+	    			// 1. source id link
+		    		$("#sourceId_"+source_id).html("<a href='javascript:scanList(\"" + source_id + "\")'>" + source_id + "</a>");
+		    		
+		    		// 2. Scan Y/N
+		    		$("#scanYn_"+source_id).html("Y");
+			    	$("#scanDate_" + source_id).html(data[1]);
+		    		
+		    		// 3. CheckScan Link
+		    		$("#scanBtn_"+source_id).html("");
+	    		} else {
+	    			alert(data[1]);
+	    		}
+	    	} else {
+	    		alert("[CheckScan] Fail!!");
+	    	}
+	    },
+	    failure: function(data) { 
+	        alert('[CheckScan] Failure.');
+	    }
+	});
+}
+
+
+//---------------------------------------
+//  Go Scan List
+//---------------------------------------
+function scanList(source_id) {
+	$("#id_sourceId").val(source_id);
+	document.mainForm.action = "{% url 'pjo:scanList' %}";
+	document.mainForm.submit();
+}
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+
+
+<div id="content-main">
+<div class="module filtered" id="searchlist">
+	<div id="toolbar">
+	
+	
+	<form action="" method="post" id="mainForm" name="mainForm" novalidate>{% csrf_token %}
+	
+		<!-- hidden -->
+		{{ sourceForm.page }}
+		{{ sourceForm.sourceId }}
+		{{ sourceForm.init }}
+		<input type="hidden" id="authority" name="authority" value="{{ request.session.authority }}">
+		
+		<div>
+			<ul class="items col2">
+				<li>
+					<label for="{{ sourceForm.txtTitle.txtTitle_for_label }}">{{ sourceForm.txtTitle.label }}</label>
+					{{ sourceForm.txtTitle }}
+				</li>
+				<li>
+					<label for="{{ sourceForm.txtRegStart.txtRegStart_for_label }}">{{ sourceForm.txtRegStart.label }}</label>
+					{{ sourceForm.txtRegStart }} - {{ sourceForm.txtRegEnd }}
+				</li>
+			</ul>
+			<ul class="items col2">	
+				<li>
+					<label for="{{ sourceForm.selScanYn.selScanYn_for_label }}">{{ sourceForm.selScanYn.label }}:</label>
+					{{ sourceForm.selScanYn }}
+				</li>
+				<li>
+					<label for="{{ sourceForm.txtScanStart.txtScanStart_for_label }}">{{ sourceForm.txtScanStart.label }}:</label>
+					{{ sourceForm.txtScanStart }} - {{ sourceForm.txtScanEnd }}
+				</li>
+			</ul>
+			<ul class="items">	
+				<li>
+					<input type="button" value="Search" class="default" id="btnSearch" onclick="searchPagingList(1)"/>
+					&nbsp;
+					<input type="button" value="ClearAll" class="default" id="btnClearAll" onclick="clearAll()"/>
+					&nbsp;
+					{%if request.session.authority == '99' %}
+					<input type="button" value="RegisterFiles" class="default" id="btnRegFile" onclick="regFile()"/>
+					{% endif %}
+				</li>
+			</ul>
+		</div>
+	</form>
+	</div>
+	
+	<!-- result -->
+	<div class="results">
+	<table id="result_list">
+		<thead>
+		<tr>
+			<th scope="col" class="column-no">
+				<div class="text">No</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-sourceId">
+				<div class="text">Source ID</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col"  class="column-title">
+				<div class="text">Title</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-regDate">
+				<div class="text">Registration Date</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-scanDate">
+				<div class="text">Scan Date</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-scanYn">
+				<div class="text">Scan Y/N</div>
+				<div class="clear"></div>
+			</th>
+
+			<th scope="col" class="column-scanBtn">
+				<div class="text">Scan</div>
+				<div class="clear"></div>
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+			{%	for row in resultList %}
+			<tr class="row1">
+				<td class="field-no">{{ forloop.counter }}</td>
+				{% if row.scan_yn == "Y" %}
+				<td class="field-sourceId" id="sourceId_{{ row.source_id }}">
+					<a href="javascript:scanList('{{ row.source_id }}')">{{ row.source_id }}</a>
+				</td>
+				{% else %}
+				<td class="field-sourceId" id="sourceId_{{ row.source_id }}">{{ row.source_id }}</td>
+				{% endif %}
+				<td class="field-title">{{ row.title }}</td>
+				<td class="field-regDate">{{ row.reg_date|date:'Y-m-d H:i' }}</td>
+				<td class="field-scanDate" id="scanDate_{{ row.source_id }}">{{ row.scan_date|date:'Y-m-d H:i' }}</td>
+				<td class="field-scanYn" id="scanYn_{{ row.source_id }}">{{ row.scan_yn }}</td>
+				{% if row.scan_yn == "N" %}
+				<td class="field-scanBtn" id="scanBtn_{{ row.source_id }}">
+					<a href="javascript:checkScan('{{ row.source_id }}')">
+					CheckScan
+					</a>
+				</td>
+				{% else %}
+				<td class="field-scanBtn"></td>
+				{% endif %}
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	</div>
+	<!-- end of result -->
+
+	
+	<!-- paging -->
+	{% if resultList.paginator.count > 0 %}
+	<div class="paginator">
+        {% if resultList.has_previous %}
+            <a href="javascript:searchPagingList({{ resultList.previous_page_number }})">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ resultList.number }} of {{ resultList.paginator.num_pages }}.
+        </span>
+
+        {% if resultList.has_next %}
+            <a href="javascript:searchPagingList( {{ resultList.next_page_number }} )">next</a>
+        {% endif %}
+	</div>
+	{% endif %}
+	<!-- end of paging -->
+	
+</div>
+</div>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,92 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+
+
+//---------------------------------------
+//  Validation Check before Saving
+//---------------------------------------
+function validationCheck() {
+
+	// item check
+	var strId = $("#txtId").val();
+	if(strId == "") {
+		alert("Fill the ID");
+		$("#txtId").focus();
+		return false;
+	}
+	
+	var strPassword = $("#txtPassword").val();
+	if(strPassword == "") {
+		alert("Fill the Password");
+		$("#txtPassword").focus();
+		return false;
+	}
+	return true;
+}
+
+
+
+//---------------------------------------
+//  Sign In
+//---------------------------------------
+function signin() {
+	
+	if(validationCheck()) {
+		document.signin_form.action = "{% url 'pjo:signin' %}";
+		document.signin_form.submit();
+	}
+}
+
+
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+	<form action="" method="post" id="signin_form" name="signin_form" novalidate>{% csrf_token %}
+	
+	<div>
+		<fieldset class="module aligned ">
+			
+		<h2>Sign In</h2>
+
+		<div class="form-row field-txtId">
+			<div>
+				<label for="txtId">ID:</label>
+				<input class="vTextField" id="txtId" maxlength="20" name="txtId" type="text" />
+			</div>
+		</div>
+
+		<div class="form-row field-txtPassword">
+			<div>
+				<label for="txtPassword">Password:</label>
+				<input class="vTextField" id="txtPassword" maxlength="20" name="txtPassword" type="password" onfocus="javascript:f_clear(this)"/>
+			</div>
+		</div>
+
+		</fieldset>
+	</div>
+
+	<div class="submit-row">
+		<input type="submit" value="SIGN IN" class="default" name="btnSignin" onclick="signin()"/>
+	</div>
+
+	</form>
+</div>
+
+{% endblock %}
+
+
+

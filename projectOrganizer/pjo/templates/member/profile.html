@@ -1,0 +1,133 @@
+{% extends "include/base.html" %}
+{% load staticfiles %}
+
+{% block extrastyle %}{{ block.super }}{% endblock %}
+
+{% block extrahead %}
+
+{{ block.super }}
+
+<script type="text/javascript">
+
+
+//---------------------------------------
+//  Validation Check before Update
+//---------------------------------------
+function validationCheck() {
+	
+	// item check
+	var strFirstName = $("#txtFirstName").val();
+	if(strFirstName == "") {
+		alert("Fill the First Name");
+		$("#txtFirstName").focus();
+		return false;
+	}
+	
+	var strLastName = $("#txtLastName").val();
+	if(strLastName == "") {
+		alert("Fill the Last Name");
+		$("#txtLastName").focus();
+		return false;
+	}
+
+	var strPassword = $("#txtPassword").val();
+	if(strPassword == "") {
+		alert("Fill the Password");
+		$("#txtPassword").focus();
+		return false;
+	}
+	
+	var strRePassword = $("#txtRePassword").val();
+	
+	if(strPassword != strRePassword) {
+		alert("Check your password.");
+		$("#txtRePassword").focus();
+		return false;
+	} 
+	
+	return true;
+}
+
+
+
+//---------------------------------------
+//  update
+//---------------------------------------
+function update() {
+	if(validationCheck()) {
+		document.profile_form.action = "{% url 'pjo:profile' %}";
+		document.profile_form.submit();
+	}
+}
+
+</script>
+
+{% endblock %}
+
+
+{% block coltype %}colM{% endblock %}
+{% block content %}
+<div id="content-main">
+	<form action="" method="post" id="profile_form" name="profile_form" novalidate>{% csrf_token %}
+	
+
+	<div>
+		<fieldset class="module aligned ">
+			
+		<h2>Personal info</h2>
+
+		<div class="form-row field-txtId">
+			<div>
+				<label for="txtId">ID:</label>
+				<input class="vTextField" id="txtId" maxlength="20" name="txtId" type="text" value="{{ id }}" readonly/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtFirstName">
+			<div>
+				<label for="txtFirstName">First name:</label>
+				<input class="vTextField" id="txtFirstName" maxlength="50" name="txtFirstName" type="text" value="{{ firstName }}" />
+			</div>
+		</div>
+		
+		<div class="form-row field-txtLastName">
+			<div>
+				<label for="txtLastName">Last name:</label>
+				<input class="vTextField" id="txtLastName" maxlength="50" name="txtLastName" type="text" value="{{ lastName }}" />
+			</div>
+		</div>
+
+		<div class="form-row field-txtInit">
+			<div>
+				<label for="txtInitial">Initial:</label>
+				<input class="vTextField" id="txtInitial" maxlength="2" name="txtInitial" type="text" value="{{ initialName }}" readonly/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtPassword">
+			<div>
+				<label for="txtPassword">Password:</label>
+				<input class="vTextField" id="txtPassword" maxlength="20" name="txtPassword" type="password" onfocus="javascript:f_clear(this)"/>
+			</div>
+		</div>
+
+		<div class="form-row field-txtRePassword">
+			<div>
+				<label for="txtRePassword">Check Password:</label>
+				<input class="vTextField" id="txtRePassword" maxlength="20" name="txtRePassword" type="password" onfocus="javascript:f_clear(this)"/>
+			</div>
+		</div>
+		</fieldset>
+	</div>
+
+	<div class="submit-row">
+		<input type="button" value="CHANGE" class="default" name="btnChange" onclick="update()"/>
+	</div>
+
+	</form>
+</div>
+
+{% endblock %}
+
+
+

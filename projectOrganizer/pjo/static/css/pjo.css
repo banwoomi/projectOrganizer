@@ -1,0 +1,409 @@
+
+
+
+/*******************************************************************
+    COMMON 
+ *******************************************************************/
+.alignCenter {
+	text-align: center;
+}
+
+.alignLeft {
+	text-align: left;
+}
+
+.alignRight {
+	text-align: right;
+}
+
+.transformNone {
+	text-transform: none !important;
+}
+
+.noneStyle {
+	padding: 0;
+	margin: 0;
+	background: none;
+	width: auto;
+}
+
+input:required, select:required {
+	background: #FAED7D;
+}
+
+.spanLink {
+	color: #447e9b;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 13px;
+	font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+    cursor: pointer;
+}
+
+.spanSubTitle {
+    padding: 8px;
+    margin: 0;
+	font-weight: 400;
+	font-size: 13px;
+	font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+	color: #666;
+}
+
+.spanComment {
+    padding: 8px;
+    margin: 0;
+	font-weight: 300;
+	font-size: 12px;
+}
+
+input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
+	background-color: rgb(0, 0, 0);
+}
+
+.chkLabel {
+	width: auto !important;
+}
+
+
+
+/*******************************************************************
+    searchlist 
+ *******************************************************************/
+#searchlist {
+    position: relative;
+    width: 100%;
+}
+
+#toolbar {
+	padding: 8px 10px;
+    margin-bottom: 15px;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    background: #f8f8f8;
+    color: #666;
+}
+
+#searchlist ul.items {
+    display: block;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+#searchlist ul.items li {
+    padding: 3px 1px;
+    font-weight: bold;
+    list-style-type: none;
+    display: inline-block;
+}
+
+#searchlist ul.items li label {
+	display: block;
+	padding: 4px 2px 0 0;
+    float: left;
+    width: 120px;
+}
+
+@media screen and (min-width:1000px){
+	#searchlist ul.col2 li {
+		width: 35em;
+	}
+	
+	#searchlist ul.col3 li {
+		width: 23em;
+	}
+}
+@media screen and (max-width:999px){
+	#searchlist ul.col2 li {
+		width: 100%;
+	}
+	
+	#searchlist ul.col3 li {
+		width: 100%;
+	}
+}
+
+
+.results {
+    width: auto;
+	overflow-x: auto;
+}
+
+
+/* searchlist TABLES */
+#searchlist table {
+	width: 100%;
+	border-right: none;
+}
+
+#searchlist table thead th {
+    padding: 8px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+#searchlist table thead th.action-checkbox-column {
+    width: 2em;
+    text-align: center;
+}
+
+#searchlist table tbody td.action-checkbox {
+    text-align: center;
+}
+
+#searchlist table tfoot {
+    color: #666;
+}
+
+
+
+/*******************************************************************
+    PAGINATOR 
+ *******************************************************************/
+.paginator {
+    font-size: 13px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    line-height: 22px;
+    margin: 0;
+    border-top: 1px solid #ddd;
+    text-align: center;
+}
+
+.paginator a:link, .paginator a:visited {
+    padding: 2px 6px;
+    text-decoration: none;
+}
+
+.paginator a.showall {
+    padding: 0;
+    border: none;
+    background: none;
+    color: #5b80b2;
+}
+
+.paginator a.showall:focus, .paginator a.showall:hover {
+    background: none;
+    color: #036;
+}
+
+.paginator .end {
+    margin-right: 6px;
+}
+
+.paginator .this-page {
+    padding: 2px 6px;
+    font-weight: bold;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+.paginator a:focus, .paginator a:hover {
+}
+
+
+
+
+/*******************************************************************
+    Modal Layer Dialog
+ *******************************************************************/
+.modalDialog {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #000;
+	z-index: 99999;
+	opacity:0;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+	pointer-events: none;
+    overflow-y: auto;
+}
+
+.modalDialog:target {
+	opacity:1;
+	pointer-events: auto;
+	background:rgba(0,0,0,0.2);
+	padding:8px;
+}
+
+.modalDialog > div {
+	max-width: 800px;
+	width: auto;
+	position: relative;
+	margin: 10% auto;
+	border-radius:8px;
+	background:#fff;
+	padding:20px;
+}
+
+.close {
+	position: absolute;
+	width: 24px;
+	top: -10px;
+	right: -12px;
+	line-height: 25px;
+	text-align: center;
+	background: #606061;
+	color: #FFFFFF !important;
+	text-decoration: none !important;
+	font-weight: bold;
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+}
+
+.modalDiv {
+	padding: 8px 10px;
+    margin-bottom: 15px;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    background: #f8f8f8;
+    color: #666;
+}
+
+ul.modalItems {
+    display: block;
+    margin: 0;
+    width: 100%;
+}
+
+ul.modalItems li {
+    padding: 3px 1px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+ul.modalItems li label {
+	display: block;
+	padding: 4px 10px 0 0;
+    float: left;
+    width: 80px;
+    text-align: right;
+}
+
+ul.modalCol2 li {
+	width: 28em;
+}
+
+ul.modalCol4 li {
+	width: 24%;
+}
+
+ul.modalCol4 li label {
+    width: 60px;
+    text-align: left;
+}
+
+
+
+/*******************************************************************
+    Navigation
+ *******************************************************************/
+.navActive {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #79aec8), color-stop(1, #417690));
+	background:-moz-linear-gradient(top, #79aec8 5%, #417690 100%);
+	background:-webkit-linear-gradient(top, #79aec8 5%, #417690 100%);
+	background:-o-linear-gradient(top, #79aec8 5%, #417690 100%);
+	background:-ms-linear-gradient(top, #79aec8 5%, #417690 100%);
+	background:linear-gradient(to bottom, #79aec8 5%, #417690 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#79aec8', endColorstr='#417690',GradientType=0);
+	background-color:#79aec8;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Verdana;
+	font-size:14px;
+	font-weight:bold;
+	padding:12px 30px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #283966;
+}
+
+.navPass {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #dfdfdf));
+	background:-moz-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
+	background:-webkit-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
+	background:-o-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
+	background:-ms-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
+	background:linear-gradient(to bottom, #ededed 5%, #dfdfdf 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#dfdfdf',GradientType=0);
+	background-color:#ededed;
+	display:inline-block;
+	cursor:pointer;
+	color:#777777;
+	font-family:Verdana;
+	font-size:14px;
+	font-weight:bold;
+	padding:12px 30px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #ffffff;
+}
+.navPass:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #dfdfdf), color-stop(1, #ededed));
+	background:-moz-linear-gradient(top, #dfdfdf 5%, #ededed 100%);
+	background:-webkit-linear-gradient(top, #dfdfdf 5%, #ededed 100%);
+	background:-o-linear-gradient(top, #dfdfdf 5%, #ededed 100%);
+	background:-ms-linear-gradient(top, #dfdfdf 5%, #ededed 100%);
+	background:linear-gradient(to bottom, #dfdfdf 5%, #ededed 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#dfdfdf', endColorstr='#ededed',GradientType=0);
+	background-color:#dfdfdf;
+}
+.navPass:active {
+	position:relative;
+	top:1px;
+}
+
+
+
+.navDeactive {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #fafafa));
+	background:-moz-linear-gradient(top, #ededed 5%, #fafafa 100%);
+	background:-webkit-linear-gradient(top, #ededed 5%, #fafafa 100%);
+	background:-o-linear-gradient(top, #ededed 5%, #fafafa 100%);
+	background:-ms-linear-gradient(top, #ededed 5%, #fafafa 100%);
+	background:linear-gradient(to bottom, #ededed 5%, #fafafa 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#fafafa',GradientType=0);
+	background-color:#ededed;
+	display:inline-block;
+	color:#c7c7c7;
+	font-family:Verdana;
+	font-size:14px;
+	font-weight:bold;
+	padding:12px 30px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #ffffff;
+}
+
+.navLine {
+	background-color:#417690;
+	line-height: 8px;
+	margin-bottom: 10px;
+}
+
+
+
+/*******************************************************************
+    Experimental Design
+ *******************************************************************/
+.spanChkKeyword {
+	padding-right: 15px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

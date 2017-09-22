@@ -666,6 +666,42 @@ def projectList(request):
 
 
 
+
+#==============================================================================
+#  Experimental Design Download
+#==============================================================================
+def edDownLoad(request):
+    
+    # get JSON data
+    jData = json.loads(request.body)
+
+    # values
+    strProjectId = jData['txtProjectId']
+    logger.debug("strProjectId==" + strProjectId)
+
+    # DAO
+    pDao = ProjectDao()
+    eDao = EdDao()
+    
+    # get Experimental List
+    edList = pDao.selectExperimentalDesignList(strProjectId)
+    print edList
+
+
+#     for txtEdId in edList:
+#         edId = txtEdId['META_ACQ'][2:]
+        
+            
+    edId = "000001"
+    edValueList = eDao.selectEDValueList(edId)
+    print edValueList
+
+    jsonTuple = "" # [row['session_nm'] + " ::> " + row['session_cmt'] for row in sessionList]
+
+    return HttpResponse(json.dumps(jsonTuple), content_type="application/json")
+
+
+
 ################################################################################
 #  MANAGE Subject
 ################################################################################
@@ -2441,8 +2477,6 @@ def edKeyListForJson(request):
 
 
 
-
-
 #==============================================================================
 #  Experimental Design Init (For modify)
 #==============================================================================
@@ -2492,3 +2526,4 @@ def edModiInit(request):
 
 
 
+    
